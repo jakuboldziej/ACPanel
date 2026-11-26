@@ -13,8 +13,20 @@ function int(name: string, def: number): number {
 
 const acRoot = path.resolve(repoRoot, process.env.AC_ROOT || "/acserver/acserver");
 
+function list(name: string): string[] {
+  return (process.env[name] ?? "")
+    .split(",")
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
 export const config = {
+  adminPasswordHash: process.env.ADMIN_PASSWORD_HASH ?? "",
+  sessionSecret: process.env.SESSION_SECRET ?? "",
+  sessionDays: int("SESSION_DAYS", 7),
+  allowedOrigins: list("ALLOWED_ORIGINS"),
   port: int("PORT", 8090),
+  host: process.env.HOST || "0.0.0.0",
   serviceUnit: process.env.ACSERVER_UNIT ?? "acserver",
   maxSlotsPerCar: int("MAX_SLOTS_PER_CAR", 3),
   acRoot,

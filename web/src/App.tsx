@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
+import { authApi, UNAUTHORIZED_EVENT } from "./api";
 import { CarsPage } from "./CarsPage";
+import { LoginPage } from "./LoginPage";
 import { LogsPage } from "./LogsPage";
 import { ServerProvider } from "./ServerContext";
 import { ServerError, StatusBar } from "./StatusBar";
@@ -14,6 +16,24 @@ function tabFromHash(): Tab {
 }
 
 export function App() {
+  const [loggedIn, setLoggedIn] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    authApi
+      .me()
+      .then((r) => setLoggedIn(r.loggedIn))
+      .catch(() => setLoggedIn(false));
+    const onUnauthorized = () => setLoggedIn(false);
+    window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+    return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
+  }, []);
+
+  if (loggedIn === null) return null;
+  if (!loggedIn) return <LoginPage onLoggedIn={() => setLoggedIn(true)} />;
+  return <Panel onLogout={() => setLoggedIn(false)} />;
+}
+
+function Panel({ onLogout }: { onLogout: () => void }) {
   const [tab, setTab] = useState<Tab>(tabFromHash);
 
   useEffect(() => {
@@ -21,6 +41,11 @@ export function App() {
     window.addEventListener("hashchange", onHash);
     return () => window.removeEventListener("hashchange", onHash);
   }, []);
+
+  async function logout() {
+    await authApi.logout().catch(() => {});
+    onLogout();
+  }
 
   return (
     <ServerProvider>
@@ -35,6 +60,9 @@ export function App() {
             ))}
           </nav>
           <StatusBar />
+          <button className="logout" onClick={() => void logout()}>
+            Log out
+          </button>
         </header>
         <ServerError />
         <main>

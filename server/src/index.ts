@@ -4,18 +4,41 @@ import fs from "node:fs";
 import { fileURLToPath } from "node:url";
 import { ZodError } from "zod";
 import { config } from "./config.js";
+import { checkOrigin, requireAuth, usingEphemeralSecret } from "./lib/auth.js";
 import { HttpError } from "./lib/fsutil.js";
+import { isValidHash } from "./lib/password.js";
+import { authRouter } from "./routes/auth.js";
 import { carsRouter } from "./routes/cars.js";
 import { tracksRouter } from "./routes/tracks.js";
 import { serverRouter } from "./routes/server.js";
 
+if (!isValidHash(config.adminPasswordHash)) {
+  console.error("ADMIN_PASSWORD_HASH is missing or invalid. Run `npm run hash-password` and put the result in .env");
+  process.exit(1);
+}
+if (usingEphemeralSecret) {
+  console.warn("SESSION_SECRET is not set, using a random one: sessions will be lost on every restart");
+}
+
 const app = express();
 app.disable("x-powered-by");
+app.set("trust proxy", "loopback");
+app.use((_req, res, next) => {
+  res.set({
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "same-origin",
+  });
+  next();
+});
 app.use(express.json({ limit: "100kb" }));
 
+app.use("/api", checkOrigin);
 app.get("/api/health", (_req, res) => {
-  res.json({ ok: true, acRoot: config.acRoot });
+  res.json({ ok: true });
 });
+app.use("/api/auth", authRouter);
+app.use("/api", requireAuth);
 app.use("/api/cars", carsRouter);
 app.use("/api/tracks", tracksRouter);
 app.use("/api/server", serverRouter);
@@ -41,6 +64,6 @@ const onError: ErrorRequestHandler = (err, _req, res, _next) => {
 };
 app.use(onError);
 
-app.listen(config.port, () => {
-  console.log(`AC Panel: http://localhost:${config.port}  (AC_ROOT=${config.acRoot})`);
+app.listen(config.port, config.host, () => {
+  console.log(`AC Panel: http://${config.host}:${config.port}  (AC_ROOT=${config.acRoot})`);
 });

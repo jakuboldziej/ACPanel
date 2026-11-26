@@ -22,12 +22,15 @@ export interface ApplyPlan {
 
 export class ApiError extends Error {}
 
+export const UNAUTHORIZED_EVENT = "acpanel:unauthorized";
+
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   const res = await fetch(url, {
     ...init,
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
   const data = await res.json().catch(() => ({}));
+  if (res.status === 401 && !url.startsWith("/api/auth/")) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
   if (!res.ok) throw new ApiError(data.error ?? `HTTP ${res.status}`);
   return data as T;
 }
@@ -112,4 +115,11 @@ export const serverApi = {
   status: () => call<ServiceStatus>("/api/server/status"),
   restart: () => call<ServiceStatus & { ready: boolean }>("/api/server/restart", { method: "POST" }),
   logs: (lines: number) => call<{ lines: string[] }>(`/api/server/logs?lines=${lines}`),
+};
+
+export const authApi = {
+  me: () => call<{ loggedIn: boolean }>("/api/auth/me"),
+  login: (password: string) =>
+    call<{ loggedIn: true }>("/api/auth/login", { method: "POST", body: JSON.stringify({ password }) }),
+  logout: () => call<{ loggedIn: false }>("/api/auth/logout", { method: "POST" }),
 };
