@@ -23,4 +23,6 @@ export const config = {
   serverCfg: path.join(acRoot, "cfg", "server_cfg.ini"),
   entryList: path.join(acRoot, "cfg", "entry_list.ini"),
   backupsDir: path.join(acRoot, "panel-backups"),
+  trackParams: path.join(acRoot, "cfg", "data_track_params.ini"),
+  pitboxOverrides: path.join(acRoot, "panel-data", "pitboxes.json"),
 };

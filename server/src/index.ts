@@ -6,6 +6,7 @@ import { ZodError } from "zod";
 import { config } from "./config.js";
 import { HttpError } from "./lib/fsutil.js";
 import { carsRouter } from "./routes/cars.js";
+import { tracksRouter } from "./routes/tracks.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -15,6 +16,7 @@ app.get("/api/health", (_req, res) => {
   res.json({ ok: true, acRoot: config.acRoot });
 });
 app.use("/api/cars", carsRouter);
+app.use("/api/tracks", tracksRouter);
 app.use("/api", (_req, res) => {
   res.status(404).json({ error: "No such endpoint" });
 });

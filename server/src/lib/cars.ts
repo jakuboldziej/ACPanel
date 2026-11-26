@@ -1,9 +1,9 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import { config } from "../config.js";
-import { allocateSlots, renderEntryList } from "./entryList.js";
-import { HttpError, assertSafeName, exists, isEmptyDir, listDirs, looseJsonField, readLoose, writeAtomic } from "./fsutil.js";
-import { backupCfg, getServerKey, readServerCfg, setServerKeys, writeServerCfg } from "./serverCfg.js";
+import { allocateSlots, writeEntries } from "./entryList.js";
+import { HttpError, assertSafeName, exists, isEmptyDir, listDirs, looseJsonField, readLoose } from "./fsutil.js";
+import { backupCfg, getServerKey, readServerCfg } from "./serverCfg.js";
 import { getCurrentTrack, type CurrentTrack } from "./tracks.js";
 
 export interface CarInfo {
@@ -74,7 +74,7 @@ export async function planCars(wanted: string[], maxSlots = config.maxSlotsPerCa
 
   const { pitboxes, track, layout } = state.track;
   if (!pitboxes) {
-    throw new HttpError(409, `Cannot read the pitbox count for track ${track}${layout ? "/" + layout : ""} (missing ui_track.json)`);
+    throw new HttpError(409, `Unknown pitbox count for track ${track}${layout ? "/" + layout : ""}, set it on the Tracks page`);
   }
 
   const sorted = unique.sort();
@@ -121,13 +121,7 @@ export async function applyCars(wanted: string[], maxSlots = config.maxSlotsPerC
   for (const id of plan.disable) await moveCar(id, config.carsDir, config.carsOffDir);
   for (const id of plan.enable) await moveCar(id, config.carsOffDir, config.carsDir);
 
-  const ini = await readServerCfg();
-  const eol = ini.includes("\r\n") ? "\r\n" : "\n";
-  const { text, total } = renderEntryList(new Map(plan.slots.map((s) => [s.car, s.slots])), eol);
-  await writeAtomic(config.entryList, text);
-  await writeServerCfg(
-    setServerKeys(ini, { CARS: plan.slots.map((s) => s.car).join(";"), MAX_CLIENTS: String(total) }),
-  );
+  await writeEntries(new Map(plan.slots.map((s) => [s.car, s.slots])));
 
   return { ...plan, backup, restartNeeded: true };
 }

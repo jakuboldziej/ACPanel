@@ -1,3 +1,7 @@
+import { config } from "../config.js";
+import { writeAtomic } from "./fsutil.js";
+import { readServerCfg, setServerKeys, writeServerCfg } from "./serverCfg.js";
+
 export function allocateSlots(cars: string[], pitboxes: number, maxSlots: number): Map<string, number> {
   if (cars.length === 0) throw new Error("No cars");
   if (cars.length > pitboxes) throw new Error(`Too many cars (${cars.length}) for ${pitboxes} pitboxes`);
@@ -31,4 +35,15 @@ export function renderEntryList(slots: Map<string, number>, eol = "\n"): { text:
     }
   }
   return { text: parts.join(eol), total: i };
+}
+
+export async function writeEntries(slots: Map<string, number>, extraKeys: Record<string, string> = {}): Promise<number> {
+  const ini = await readServerCfg();
+  const eol = ini.includes("\r\n") ? "\r\n" : "\n";
+  const { text, total } = renderEntryList(slots, eol);
+  await writeAtomic(config.entryList, text);
+  await writeServerCfg(
+    setServerKeys(ini, { ...extraKeys, CARS: [...slots.keys()].join(";"), MAX_CLIENTS: String(total) }),
+  );
+  return total;
 }

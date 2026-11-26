@@ -20,8 +20,17 @@ for (const c of off) w(`content/cars_off/${c}/data.acd`, "x");
 w("content/cars_off/abarth500/ui/ui_car.json", '{ "name": "Abarth 500 EsseEsse" }');
 fs.mkdirSync(path.join(root, "content/cars_off/ks_empty_placeholder"), { recursive: true });
 
+for (const l of ["nordschleife", "endurance", "touristenfahrten"]) w(`content/tracks/ks_nordschleife/${l}/data/surfaces.ini`, "");
 w("content/tracks/ks_nordschleife/ui/nordschleife/ui_track.json", '{ "name": "Nordschleife", "pitboxes": "24" }');
+w("content/tracks/ks_nordschleife/ui/endurance/ui_track.json", '{ "name": "Nordschleife Endurance", "pitboxes": "4" }');
+w("content/tracks/ks_nordschleife/ui/touristenfahrten/ui_track.json", '{ "name": "Nordschleife - Tourist", "pitboxes": "32" }');
+w("content/tracks/magione/data/surfaces.ini", "");
 w("content/tracks/magione/ui/ui_track.json", '{ "name": "Magione", "pitboxes": "10" }');
+for (const l of ["club_circuit", "extended_circuit"]) w(`content/tracks/ks_vallelunga/${l}/data/surfaces.ini`, "");
+w("content/tracks/drift/data/surfaces.ini", "");
+fs.mkdirSync(path.join(root, "content/tracks/ks_barcelona"), { recursive: true });
+
+w("cfg/data_track_params.ini", ["[ks_nordschleife]", "[magione]", "[ks_vallelunga]", ""].join("\r\n"));
 
 w(
   "cfg/server_cfg.ini",
