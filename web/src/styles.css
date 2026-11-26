@@ -188,3 +188,8 @@ a { color: var(--accent); }
 .track-meta { display: flex; align-items: center; justify-content: space-between; margin: -4px 0 8px; font-size: 13px; }
 .track-meta .icon-btn { margin-right: 0; }
 .item-list .thumb { width: 64px; height: 36px; }
+.layout-pick .outline { width: 34px; height: 34px; object-fit: contain; flex-shrink: 0; filter: invert(0); }
+@media (prefers-color-scheme: light) { .layout-pick .outline { filter: invert(1); } }
+.layout-text { display: flex; flex-direction: column; min-width: 0; }
+.layout-text .id { font-size: 12px; color: var(--muted); }
+.item-warning { font-size: 13px; color: #c98a00; padding: 2px 8px 4px; }

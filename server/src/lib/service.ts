@@ -23,6 +23,23 @@ export interface ServiceStatus {
   live: LiveInfo | null;
   configChangedAt: string | null;
   restartRequired: boolean;
+  disk: DiskInfo | null;
+}
+
+export interface DiskInfo {
+  path: string;
+  freeBytes: number;
+  totalBytes: number;
+}
+
+async function contentDisk(): Promise<DiskInfo | null> {
+  try {
+    const real = await fs.realpath(config.carsDir);
+    const s = await fs.statfs(real);
+    return { path: path.dirname(real), freeBytes: s.bavail * s.bsize, totalBytes: s.blocks * s.bsize };
+  } catch {
+    return null;
+  }
 }
 
 function requireUnit(): string {
@@ -106,6 +123,7 @@ export async function getStatus(): Promise<ServiceStatus> {
       live: null,
       configChangedAt: changed?.toISOString() ?? null,
       restartRequired: false,
+      disk: await contentDisk(),
     };
   }
   const sd = await systemdState(config.serviceUnit);
@@ -121,6 +139,7 @@ export async function getStatus(): Promise<ServiceStatus> {
     live: sd.active ? live : null,
     configChangedAt: changed?.toISOString() ?? null,
     restartRequired: Boolean(sd.active && sd.since && changed && changed > sd.since),
+    disk: await contentDisk(),
   };
 }
 

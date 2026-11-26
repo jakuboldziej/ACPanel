@@ -315,6 +315,11 @@ function InstallForm(props: { upload: UploadView; onInstalled: (r: InstallResult
               {item.existing && <span className="tag warn">replaces existing ({item.existing})</span>}
               {!item.validId && <span className="tag warn">invalid folder name</span>}
             </label>
+            {item.warnings.map((w) => (
+              <div key={w} className="item-warning">
+                {w}
+              </div>
+            ))}
           </li>
         ))}
       </ul>

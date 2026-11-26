@@ -224,7 +224,11 @@ function TrackCard(props: {
         )}
       </div>
       <div className="track-meta">
-        <span className="muted">{track.empty ? "empty folder" : formatBytes(track.sizeBytes)}</span>
+        <span className="muted">
+          {track.empty
+            ? "empty folder"
+            : [track.city, track.country, formatBytes(track.sizeBytes)].filter(Boolean).join(" · ")}
+        </span>
         {!isCurrentTrack && (
           <button className="icon-btn danger" onClick={props.onDelete}>
             Delete
@@ -248,6 +252,11 @@ function TrackCard(props: {
       )}
     </li>
   );
+}
+
+function formatLength(layout: LayoutInfo): string | null {
+  if (layout.lengthMeters) return `${(layout.lengthMeters / 1000).toFixed(layout.lengthMeters >= 10000 ? 1 : 2)} km`;
+  return layout.lengthText;
 }
 
 function LayoutRow(props: {
@@ -277,8 +286,25 @@ function LayoutRow(props: {
   return (
     <li className={`layout ${props.isCurrent ? "current" : ""} ${props.isSelected ? "selected" : ""}`}>
       <button className="layout-pick" disabled={props.isCurrent} onClick={props.onSelect}>
-        <span className="name">{layout.name}</span>
-        {layout.id && layout.id !== layout.name && <span className="id">{layout.id}</span>}
+        {layout.hasOutline && (
+          <img
+            className="outline"
+            src={`/api/tracks/${encodeURIComponent(props.trackId)}/image?layout=${encodeURIComponent(layout.id)}&kind=outline`}
+            alt=""
+            loading="lazy"
+          />
+        )}
+        <span className="layout-text">
+          <span className="name">{layout.name}</span>
+          <span className="id">
+            {[layout.id && layout.id !== layout.name ? layout.id : null, formatLength(layout)].filter(Boolean).join(" · ")}
+          </span>
+        </span>
+        {layout.hasAiLine && (
+          <span className="tag" title="Has ai/fast_lane.ai, needed for AI (EnableAi). Road tracks usually ship a dedicated traffic spline.">
+            AI line
+          </span>
+        )}
         {props.isCurrent && <span className="tag">current</span>}
       </button>
 

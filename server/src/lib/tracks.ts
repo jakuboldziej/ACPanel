@@ -6,6 +6,7 @@ import { HttpError, assertSafeName, exists, listDirs, looseJsonField, readLoose,
 import { backupCfg, getServerKey, readServerCfg } from "./serverCfg.js";
 import { dirSize } from "./archive.js";
 import { trackImagePath } from "./preview.js";
+import { readUiJson, trackMeta } from "./uiMeta.js";
 
 export type PitboxSource = "manual" | "ui" | null;
 
@@ -22,6 +23,9 @@ export interface LayoutInfo {
   pitboxesSource: PitboxSource;
   hasPreview: boolean;
   hasOutline: boolean;
+  hasAiLine: boolean;
+  lengthMeters: number | null;
+  lengthText: string | null;
 }
 
 export interface TrackInfo {
@@ -30,6 +34,8 @@ export interface TrackInfo {
   empty: boolean;
   hasTrackParams: boolean;
   sizeBytes: number;
+  country: string | null;
+  city: string | null;
   layouts: LayoutInfo[];
 }
 
@@ -109,23 +115,36 @@ async function listLayoutIds(track: string): Promise<string[]> {
 
 async function getTrackInfo(id: string, overrides: Record<string, number>, params: Set<string>): Promise<TrackInfo> {
   const layoutIds = await listLayoutIds(id);
+  const trackDir = path.join(config.tracksDir, id);
+  const uiJsonPath = (layout: string) => path.join(trackDir, "ui", ...(layout ? [layout] : []), "ui_track.json");
+  const metas: ReturnType<typeof trackMeta>[] = [];
   const layouts = await Promise.all(
     layoutIds.map(async (layout): Promise<LayoutInfo> => {
       const ui = await readUiTrack(id, layout);
-      const trackDir = path.join(config.tracksDir, id);
+      const meta = trackMeta(await readUiJson(uiJsonPath(layout)));
+      metas.push(meta);
+      const layoutDir = layout ? path.join(trackDir, layout) : trackDir;
       return {
         id: layout,
-        name: (ui && looseJsonField(ui, "name")) || layout || "default",
+        name: meta.name ?? (layout || "default"),
         ...(await resolvePitboxes(id, layout, overrides, ui)),
         hasPreview: await exists(trackImagePath(trackDir, layout, "preview")),
         hasOutline: await exists(trackImagePath(trackDir, layout, "outline")),
+        hasAiLine:
+          (await exists(path.join(layoutDir, "ai", "fast_lane.ai"))) ||
+          (await exists(path.join(layoutDir, "ai", "fast_lane.aip"))),
+        lengthMeters: meta.lengthMeters,
+        lengthText: meta.lengthText,
       };
     }),
   );
-  const rootUi = await readUiTrack(id, "");
+  const rootMeta = trackMeta(await readUiJson(uiJsonPath("")));
+  const anyMeta = [rootMeta, ...metas];
   return {
     id,
-    name: (rootUi && looseJsonField(rootUi, "name")) || id,
+    name: rootMeta.name ?? id,
+    country: anyMeta.find((m) => m.country)?.country ?? null,
+    city: anyMeta.find((m) => m.city)?.city ?? null,
     empty: layouts.length === 0,
     hasTrackParams: params.has(id.toLowerCase()),
     sizeBytes: await dirSize(path.join(config.tracksDir, id)).catch(() => 0),

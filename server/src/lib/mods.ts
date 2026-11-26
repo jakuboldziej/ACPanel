@@ -7,7 +7,8 @@ import { Transform, type Readable } from "node:stream";
 import { config } from "../config.js";
 import { dirSize, extractArchive, listArchive } from "./archive.js";
 import { findCarImage, trackImagePath, type ImageKind } from "./preview.js";
-import { HttpError, SAFE_NAME, exists, isEmptyDir, looseJsonField, moveDir, readLoose } from "./fsutil.js";
+import { readUiJson } from "./uiMeta.js";
+import { HttpError, SAFE_NAME, exists, isEmptyDir, moveDir } from "./fsutil.js";
 
 export const CHUNK_SIZE = 32 * 1024 * 1024;
 const ALLOWED_EXT = new Set([".zip", ".rar", ".7z"]);
@@ -28,6 +29,7 @@ export interface ModItem {
   existing: ExistingState;
   validId: boolean;
   image: ImageKind | null;
+  warnings: string[];
 }
 
 interface UploadMeta {
@@ -192,8 +194,16 @@ async function existingState(kind: ItemKind, id: string): Promise<ExistingState>
 }
 
 async function itemName(dir: string, kind: ItemKind, id: string): Promise<string> {
-  const ui = await readLoose(path.join(dir, "ui", kind === "car" ? "ui_car.json" : "ui_track.json"));
-  return (ui && looseJsonField(ui, "name")) || id;
+  const ui = await readUiJson(path.join(dir, "ui", kind === "car" ? "ui_car.json" : "ui_track.json"));
+  return typeof ui?.name === "string" && ui.name.trim() ? ui.name.trim() : id;
+}
+
+async function itemWarnings(dir: string, kind: ItemKind): Promise<string[]> {
+  const out: string[] = [];
+  if (kind === "car" && !(await exists(path.join(dir, "data.acd"))) && (await exists(path.join(dir, "data")))) {
+    out.push("No data.acd, only an unpacked data/ folder: the server cannot verify the car physics");
+  }
+  return out;
 }
 
 async function firstTrackPreview(dir: string): Promise<string | null> {
@@ -247,6 +257,7 @@ async function detectItems(root: string, archiveName: string): Promise<ModItem[]
         existing: validId ? await existingState(kind, id) : null,
         validId,
         image: await itemImage(dir, kind).then((i) => i?.kind ?? null),
+        warnings: await itemWarnings(dir, kind),
       });
       return;
     }

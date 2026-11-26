@@ -2,10 +2,11 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { config } from "../config.js";
 import { allocateSlots, writeEntries } from "./entryList.js";
-import { HttpError, assertSafeName, exists, isEmptyDir, listDirs, looseJsonField, moveDir, readLoose } from "./fsutil.js";
+import { HttpError, assertSafeName, exists, isEmptyDir, listDirs, moveDir } from "./fsutil.js";
 import { backupCfg, getServerKey, readServerCfg } from "./serverCfg.js";
 import { dirSize } from "./archive.js";
 import { findCarImage, type ImageKind } from "./preview.js";
+import { carMeta, readUiJson, type CarSpecs } from "./uiMeta.js";
 import { getCurrentTrack, type CurrentTrack } from "./tracks.js";
 
 export interface CarInfo {
@@ -16,6 +17,11 @@ export interface CarInfo {
   inConfig: boolean;
   sizeBytes: number;
   image: ImageKind | null;
+  brand: string | null;
+  carClass: string | null;
+  tags: string[];
+  specs: CarSpecs | null;
+  missingDataAcd: boolean;
 }
 
 export interface CarsState {
@@ -24,9 +30,8 @@ export interface CarsState {
   maxSlotsPerCar: number;
 }
 
-async function displayName(dir: string, id: string): Promise<string> {
-  const text = await readLoose(path.join(dir, id, "ui", "ui_car.json"));
-  return (text && looseJsonField(text, "name")) || id;
+export async function hasUnprotectedData(dir: string): Promise<boolean> {
+  return !(await exists(path.join(dir, "data.acd"))) && (await exists(path.join(dir, "data")));
 }
 
 export async function getCarsState(): Promise<CarsState> {
@@ -43,17 +48,28 @@ export async function getCarsState(): Promise<CarsState> {
       const prev = byId.get(d.name);
       if (prev && !prev.empty && d.empty) continue;
       const full = path.join(dir, d.name);
-      const [name, sizeBytes, image] = d.empty
-        ? [d.name, 0, null]
-        : await Promise.all([displayName(dir, d.name), dirSize(full), findCarImage(full)]);
+      const [ui, sizeBytes, image, missingDataAcd] = d.empty
+        ? [null, 0, null, false]
+        : await Promise.all([
+            readUiJson(path.join(full, "ui", "ui_car.json")),
+            dirSize(full),
+            findCarImage(full),
+            hasUnprotectedData(full),
+          ]);
+      const meta = carMeta(ui);
       byId.set(d.name, {
         id: d.name,
-        name,
+        name: meta.name ?? d.name,
         enabled: enabled && !d.empty,
         empty: d.empty,
         inConfig: inConfig.has(d.name),
         sizeBytes,
         image: image?.kind ?? null,
+        brand: meta.brand,
+        carClass: meta.carClass,
+        tags: meta.tags,
+        specs: ui ? meta.specs : null,
+        missingDataAcd,
       });
     }
   }

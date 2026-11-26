@@ -13,6 +13,8 @@ export function CarsPage() {
   const [maxSlots, setMaxSlots] = useState(3);
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
+  const [classFilter, setClassFilter] = useState("");
+  const [tagFilter, setTagFilter] = useState("");
   const [plan, setPlan] = useState<ApplyPlan | null>(null);
   const [planError, setPlanError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -60,9 +62,39 @@ export function CarsPage() {
       const on = selected.has(c.id);
       if (filter === "on" && !on) return false;
       if (filter === "off" && on) return false;
-      return !q || c.id.toLowerCase().includes(q) || c.name.toLowerCase().includes(q);
+      if (classFilter && c.carClass !== classFilter) return false;
+      if (tagFilter && !c.tags.includes(tagFilter)) return false;
+      return (
+        !q ||
+        c.id.toLowerCase().includes(q) ||
+        c.name.toLowerCase().includes(q) ||
+        (c.brand ?? "").toLowerCase().includes(q)
+      );
     });
-  }, [state, query, filter, selected]);
+  }, [state, query, filter, classFilter, tagFilter, selected]);
+
+  const facets = useMemo(() => {
+    const classes = new Map<string, number>();
+    const tags = new Map<string, number>();
+    for (const c of state?.cars ?? []) {
+      if (c.carClass) classes.set(c.carClass, (classes.get(c.carClass) ?? 0) + 1);
+      for (const t of c.tags) tags.set(t, (tags.get(t) ?? 0) + 1);
+    }
+    const sorted = (m: Map<string, number>) => [...m].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    return { classes: sorted(classes), tags: sorted(tags) };
+  }, [state]);
+
+  function selectVisible(on: boolean) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      for (const c of visible) {
+        if (c.empty) continue;
+        if (on) next.add(c.id);
+        else next.delete(c.id);
+      }
+      return next;
+    });
+  }
 
   function toggle(id: string) {
     setSelected((prev) => {
@@ -190,6 +222,32 @@ export function CarsPage() {
             </button>
           ))}
         </div>
+        {facets.classes.length > 0 && (
+          <select value={classFilter} onChange={(e) => setClassFilter(e.target.value)}>
+            <option value="">All classes</option>
+            {facets.classes.map(([c, n]) => (
+              <option key={c} value={c}>
+                {c} ({n})
+              </option>
+            ))}
+          </select>
+        )}
+        {facets.tags.length > 0 && (
+          <select value={tagFilter} onChange={(e) => setTagFilter(e.target.value)}>
+            <option value="">All tags</option>
+            {facets.tags.map(([t, n]) => (
+              <option key={t} value={t}>
+                {t} ({n})
+              </option>
+            ))}
+          </select>
+        )}
+        <button onClick={() => selectVisible(true)} disabled={visible.length === 0}>
+          Select shown
+        </button>
+        <button onClick={() => selectVisible(false)} disabled={visible.length === 0}>
+          Unselect shown
+        </button>
         {dirty && (
           <button onClick={() => setSelected(new Set(state.cars.filter((c) => c.enabled).map((c) => c.id)))}>
             Revert changes
@@ -207,12 +265,31 @@ export function CarsPage() {
                 <input type="checkbox" checked={on} disabled={c.empty} onChange={() => toggle(c.id)} />
                 <Thumb src={c.image ? `/api/cars/${encodeURIComponent(c.id)}/image` : null} kind={c.image} />
                 <span className="car-text">
-                  <span className="name">{c.name}</span>
+                  <span className="name" title={c.id}>
+                    {c.name}
+                  </span>
                   <span className="id">
-                    {c.name !== c.id ? `${c.id} · ` : ""}
-                    {c.empty ? "empty folder" : formatBytes(c.sizeBytes)}
+                    {c.empty
+                      ? `${c.id} · empty folder`
+                      : [
+                          c.brand,
+                          c.carClass,
+                          c.specs?.bhp,
+                          c.specs?.weight,
+                          formatBytes(c.sizeBytes),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
                   </span>
                 </span>
+                {c.missingDataAcd && (
+                  <span
+                    className="tag warn"
+                    title="Only an unpacked data/ folder, no data.acd: the server cannot verify the car physics, so players could use modified physics"
+                  >
+                    no data.acd
+                  </span>
+                )}
                 {on && slotsByCar.has(c.id) && <span className="tag slots">{slotsByCar.get(c.id)} slots</span>}
               </label>
               {!c.enabled && (

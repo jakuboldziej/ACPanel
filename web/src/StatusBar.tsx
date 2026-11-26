@@ -1,3 +1,4 @@
+import { formatBytes } from "./format";
 import { useServer } from "./ServerContext";
 
 function trackLabel(track: string): string {
@@ -22,6 +23,7 @@ export function StatusBar() {
       <div className="status">
         <span className="dot off" />
         <span className="muted">Server control disabled</span>
+        <DiskBadge />
       </div>
     );
   }
@@ -44,11 +46,24 @@ export function StatusBar() {
               : `Offline (${status.state})`}
       </span>
       {status.active && !restarting && <span className="muted">up {since(status.since)}</span>}
+      <DiskBadge />
       {status.restartRequired && !restarting && <span className="tag warn">Restart required</span>}
       <button className={status.restartRequired ? "primary" : ""} disabled={restarting} onClick={() => void restart()}>
         {restarting ? "Restarting…" : "Restart"}
       </button>
     </div>
+  );
+}
+
+function DiskBadge() {
+  const { status } = useServer();
+  const disk = status?.disk;
+  if (!disk) return null;
+  const low = disk.freeBytes / disk.totalBytes < 0.1;
+  return (
+    <span className={low ? "tag warn" : "muted"} title={`Content disk: ${disk.path}`}>
+      {formatBytes(disk.freeBytes)} free
+    </span>
   );
 }
 

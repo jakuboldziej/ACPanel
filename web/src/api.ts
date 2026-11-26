@@ -6,6 +6,11 @@ export interface CarInfo {
   inConfig: boolean;
   sizeBytes: number;
   image: "preview" | "badge" | null;
+  brand: string | null;
+  carClass: string | null;
+  tags: string[];
+  specs: { bhp: string | null; weight: string | null; topspeed: string | null; pwratio: string | null } | null;
+  missingDataAcd: boolean;
 }
 
 export interface CarsState {
@@ -59,6 +64,9 @@ export interface LayoutInfo {
   pitboxesSource: PitboxSource;
   hasPreview: boolean;
   hasOutline: boolean;
+  hasAiLine: boolean;
+  lengthMeters: number | null;
+  lengthText: string | null;
 }
 
 export interface TrackInfo {
@@ -67,6 +75,8 @@ export interface TrackInfo {
   empty: boolean;
   hasTrackParams: boolean;
   sizeBytes: number;
+  country: string | null;
+  city: string | null;
   layouts: LayoutInfo[];
 }
 
@@ -118,6 +128,7 @@ export interface ServiceStatus {
   live: LiveInfo | null;
   configChangedAt: string | null;
   restartRequired: boolean;
+  disk: { path: string; freeBytes: number; totalBytes: number } | null;
 }
 
 export const serverApi = {
@@ -204,6 +215,7 @@ export interface ModItem {
   existing: "enabled" | "disabled" | "installed" | null;
   validId: boolean;
   image: "preview" | "badge" | null;
+  warnings: string[];
 }
 
 export interface UploadView {
