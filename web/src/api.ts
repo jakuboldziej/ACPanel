@@ -123,3 +123,62 @@ export const authApi = {
     call<{ loggedIn: true }>("/api/auth/login", { method: "POST", body: JSON.stringify({ password }) }),
   logout: () => call<{ loggedIn: false }>("/api/auth/logout", { method: "POST" }),
 };
+
+export interface PluginInfo {
+  name: string;
+  installed: boolean;
+  enabled: boolean;
+  configFile: string | null;
+  configExists: boolean;
+  referenceExists: boolean;
+  schemaExists: boolean;
+}
+
+export interface PluginConfig {
+  name: string;
+  file: string | null;
+  exists: boolean;
+  yaml: string;
+  reference: string | null;
+  hasSchema: boolean;
+}
+
+export const pluginsApi = {
+  list: () => call<{ plugins: PluginInfo[]; extraCfgExists: boolean }>("/api/plugins"),
+  setEnabled: (enabled: string[]) =>
+    call<{ backup: string; enabled: string[] }>("/api/plugins", { method: "PUT", body: JSON.stringify({ enabled }) }),
+  getConfig: (name: string) => call<PluginConfig>(`/api/plugins/${encodeURIComponent(name)}/config`),
+  saveConfig: (name: string, yaml: string) =>
+    call<{ backup: string | null }>(`/api/plugins/${encodeURIComponent(name)}/config`, {
+      method: "PUT",
+      body: JSON.stringify({ yaml }),
+    }),
+  fromReference: (name: string) =>
+    call<PluginConfig>(`/api/plugins/${encodeURIComponent(name)}/config/from-reference`, { method: "POST" }),
+};
+
+export type FieldValue = boolean | number | string | null;
+
+export interface FieldInfo {
+  key: string;
+  type: "boolean" | "integer" | "number" | "string";
+  nullable: boolean;
+  description: string;
+  default: FieldValue | undefined;
+  enum: string[] | null;
+}
+
+export interface ExtraConfig {
+  yaml: string;
+  fields: FieldInfo[];
+  values: Record<string, FieldValue>;
+  hasSchema: boolean;
+}
+
+export const extraConfigApi = {
+  get: () => call<ExtraConfig>("/api/extra-config"),
+  saveValues: (values: Record<string, FieldValue>) =>
+    call<{ backup: string }>("/api/extra-config/values", { method: "PUT", body: JSON.stringify({ values }) }),
+  saveRaw: (yaml: string) =>
+    call<{ backup: string }>("/api/extra-config/raw", { method: "PUT", body: JSON.stringify({ yaml }) }),
+};

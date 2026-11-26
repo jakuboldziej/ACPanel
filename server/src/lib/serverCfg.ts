@@ -56,12 +56,16 @@ export async function writeServerCfg(content: string): Promise<void> {
   await writeAtomic(config.serverCfg, content);
 }
 
-export async function backupCfg(): Promise<string> {
+export async function backupFiles(files: string[]): Promise<string> {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-");
   const dir = path.join(config.backupsDir, stamp);
   await fs.mkdir(dir, { recursive: true });
-  for (const f of [config.serverCfg, config.entryList]) {
+  for (const f of files) {
     await fs.copyFile(f, path.join(dir, path.basename(f))).catch(() => {});
   }
   return dir;
+}
+
+export async function backupCfg(): Promise<string> {
+  return backupFiles([config.serverCfg, config.entryList]);
 }

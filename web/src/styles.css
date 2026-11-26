@@ -113,3 +113,39 @@ code { font-size: 90%; }
 .login-card input { padding: 9px 12px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); }
 .login-card .msg { margin-top: 0; }
 .login-card button.primary { margin-left: 0; }
+.mono { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; }
+.spacer { flex: 1; }
+select { font: inherit; color: inherit; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); }
+.summary button.primary { margin-left: 0; }
+.summary button:first-of-type { margin-left: auto; }
+.plugin-list { list-style: none; padding: 0; margin: 16px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 10px; }
+.plugin { display: flex; flex-direction: column; gap: 6px; padding: 12px; }
+.plugin.on { background: var(--on); }
+.plugin.changed { outline: 2px solid #e0b000; }
+.plugin-head { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.plugin-head .name { font-weight: 600; }
+.plugin-head .tag:first-of-type { margin-left: auto; }
+.plugin-desc { margin: 0; font-size: 13px; flex: 1; }
+.plugin button { align-self: flex-start; }
+.editor { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.editor-head { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.editor-head > div:first-child { margin-right: auto; }
+.editor-head .value { font-size: 15px; }
+.editor .msg { margin-top: 0; }
+.editor-panes { display: grid; gap: 12px; }
+.editor-panes.split { grid-template-columns: 1fr 1fr; }
+@media (max-width: 800px) { .editor-panes.split { grid-template-columns: 1fr; } }
+.editor-actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.editor-actions .muted { margin-right: auto; font-size: 13px; }
+.editor-actions button.primary { margin-left: 0; }
+.yaml-editor { width: 100%; resize: vertical; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--text); font: 12.5px/1.5 ui-monospace, "Cascadia Code", Consolas, monospace; tab-size: 2; }
+.yaml-editor[readonly] { opacity: .85; }
+.settings .toolbar { align-items: center; margin-top: 0; }
+.settings .toolbar button.primary { margin-left: 0; }
+.field-list { list-style: none; padding: 0; margin: 12px 0 0; display: flex; flex-direction: column; gap: 6px; }
+.field { padding: 10px 14px; }
+.field.changed { outline: 2px solid #e0b000; }
+.field-main { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.field-key { font-weight: 600; min-width: 280px; }
+.field-main input[type="text"], .field-main input[type="number"] { min-width: 220px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); }
+.field-desc, .field-default { margin: 4px 0 0; font-size: 13px; }

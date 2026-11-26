@@ -39,4 +39,7 @@ export const config = {
   trackParams: path.join(acRoot, "cfg", "data_track_params.ini"),
   pitboxOverrides: path.join(acRoot, "panel-data", "pitboxes.json"),
   extraCfg: path.join(acRoot, "cfg", "extra_cfg.yml"),
+  cfgDir: path.join(acRoot, "cfg"),
+  pluginsDir: path.join(acRoot, "plugins"),
+  extraCfgSchema: path.join(acRoot, "cfg", "schemas", "extra_cfg.schema.json"),
 };

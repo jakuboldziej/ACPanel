@@ -30,6 +30,64 @@ for (const l of ["club_circuit", "extended_circuit"]) w(`content/tracks/ks_valle
 w("content/tracks/drift/data/surfaces.ini", "");
 fs.mkdirSync(path.join(root, "content/tracks/ks_barcelona"), { recursive: true });
 
+for (const p of ["VotingWeatherPlugin", "AutoModerationPlugin", "GeoIPPlugin", "RandomWeatherPlugin"]) {
+  w(`plugins/${p}/${p}.dll`, "x");
+}
+
+w(
+  "cfg/extra_cfg.yml",
+  [
+    "# Override minimum CSP version required to join this server. Leave this empty to not require CSP.",
+    "MinimumCSPVersion: 2651",
+    "# Force headlights on for all cars",
+    "ForceLights: false",
+    "# Enable AI traffic",
+    "EnableAi: false",
+    "# List of plugins to enable",
+    "EnablePlugins: ",
+    "# Server description shown in Content Manager",
+    "ServerDescription: ''",
+    "# Radius around a player in which other cars are sent with full rate",
+    "NetworkBubbleDistance: 500",
+    "",
+  ].join("\n"),
+);
+
+w(
+  "cfg/schemas/extra_cfg.schema.json",
+  JSON.stringify(
+    {
+      $schema: "http://json-schema.org/draft-04/schema#",
+      type: "object",
+      additionalProperties: false,
+      properties: {
+        MinimumCSPVersion: { type: ["integer", "null"], description: "Minimum CSP version required to join", default: 2651 },
+        ForceLights: { type: "boolean", description: "Force headlights on for all cars", default: false },
+        EnableAi: { type: "boolean", description: "Enable AI traffic", default: false },
+        EnablePlugins: { type: ["array", "null"], description: "List of plugins to enable", items: { type: "string" } },
+        ServerDescription: { type: ["null", "string"], description: "Server description shown in Content Manager" },
+        NetworkBubbleDistance: { type: "number", description: "Radius around a player with full update rate", default: 500 },
+      },
+    },
+    null,
+    2,
+  ),
+);
+
+w(
+  "cfg/reference/plugin_voting_weather_cfg.reference.yml",
+  ["# Number of choices players can choose from at each voting interval", "NumChoices: 3", "# How long the vote stays open", "VotingDurationSeconds: 30", ""].join("\n"),
+);
+w(
+  "cfg/schemas/plugin_voting_weather_cfg.schema.json",
+  JSON.stringify({
+    $schema: "http://json-schema.org/draft-04/schema#",
+    type: "object",
+    additionalProperties: false,
+    properties: { NumChoices: { type: "integer" }, VotingDurationSeconds: { type: "integer" } },
+  }),
+);
+
 w("cfg/data_track_params.ini", ["[ks_nordschleife]", "[magione]", "[ks_vallelunga]", ""].join("\r\n"));
 
 w(

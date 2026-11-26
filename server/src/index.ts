@@ -11,6 +11,8 @@ import { authRouter } from "./routes/auth.js";
 import { carsRouter } from "./routes/cars.js";
 import { tracksRouter } from "./routes/tracks.js";
 import { serverRouter } from "./routes/server.js";
+import { pluginsRouter } from "./routes/plugins.js";
+import { extraConfigRouter } from "./routes/extraConfig.js";
 
 if (!isValidHash(config.adminPasswordHash)) {
   console.error("ADMIN_PASSWORD_HASH is missing or invalid. Run `npm run hash-password` and put the result in .env");
@@ -42,6 +44,8 @@ app.use("/api", requireAuth);
 app.use("/api/cars", carsRouter);
 app.use("/api/tracks", tracksRouter);
 app.use("/api/server", serverRouter);
+app.use("/api/plugins", pluginsRouter);
+app.use("/api/extra-config", extraConfigRouter);
 app.use("/api", (_req, res) => {
   res.status(404).json({ error: "No such endpoint" });
 });

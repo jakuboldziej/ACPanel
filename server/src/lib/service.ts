@@ -85,9 +85,9 @@ async function fetchLive(root: string): Promise<LiveInfo | null> {
 
 async function configChangedAt(root: string): Promise<Date | null> {
   const times = await Promise.all(
-    ["server_cfg.ini", "entry_list.ini", "extra_cfg.yml"].map((f) =>
-      fs.stat(path.join(root, "cfg", f)).then((s) => s.mtime, () => null),
-    ),
+    (await fs.readdir(path.join(root, "cfg")).catch(() => [] as string[]))
+      .filter((f) => f.endsWith(".ini") || f.endsWith(".yml"))
+      .map((f) => fs.stat(path.join(root, "cfg", f)).then((s) => s.mtime, () => null)),
   );
   const valid = times.filter((t): t is Date => t !== null);
   return valid.length ? new Date(Math.max(...valid.map((t) => t.getTime()))) : null;
