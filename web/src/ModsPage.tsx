@@ -202,7 +202,10 @@ export function ModsPage() {
             e.target.value = "";
           }}
         />
-        <div className="dropzone-title">Drop mod archives here or click to choose</div>
+        <div className="dropzone-title">
+          <span className="desktop-only">Drop mod archives here or click to choose</span>
+          <span className="mobile-only">Tap to choose mod archives</span>
+        </div>
         <div className="muted">
           {settings ? `${settings.extensions.join(", ")} · up to ${formatBytes(settings.maxUploadMb * 1024 * 1024)}` : "…"}
         </div>

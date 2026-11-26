@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { authApi, UNAUTHORIZED_EVENT } from "./api";
 import { CarsPage } from "./CarsPage";
 import { LoginPage } from "./LoginPage";
@@ -41,6 +41,23 @@ export function App() {
 
 function Panel({ onLogout }: { onLogout: () => void }) {
   const [tab, setTab] = useState<Tab>(tabFromHash);
+  const navRef = useRef<HTMLElement>(null);
+  const [navAtEnd, setNavAtEnd] = useState(false);
+
+  const updateNavEnd = useCallback(() => {
+    const nav = navRef.current;
+    if (nav) setNavAtEnd(nav.scrollLeft + nav.clientWidth >= nav.scrollWidth - 4);
+  }, []);
+
+  useEffect(() => {
+    navRef.current?.querySelector("a.active")?.scrollIntoView({ block: "nearest", inline: "nearest" });
+    updateNavEnd();
+  }, [tab, updateNavEnd]);
+
+  useEffect(() => {
+    window.addEventListener("resize", updateNavEnd);
+    return () => window.removeEventListener("resize", updateNavEnd);
+  }, [updateNavEnd]);
 
   useEffect(() => {
     const onHash = () => setTab(tabFromHash());
@@ -58,7 +75,7 @@ function Panel({ onLogout }: { onLogout: () => void }) {
       <div className="app">
         <header className="topbar">
           <h1>AC Panel</h1>
-          <nav>
+          <nav ref={navRef} className={navAtEnd ? "at-end" : ""} onScroll={updateNavEnd}>
             {(Object.keys(tabs) as Tab[]).map((t) => (
               <a key={t} href={`#${t}`} className={tab === t ? "active" : ""}>
                 {tabs[t]}
