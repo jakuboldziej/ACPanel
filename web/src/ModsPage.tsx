@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
+import { Thumb } from "./Thumb";
 import { modsApi, uploadChunk, type InstallResult, type UploadSettings, type UploadView } from "./api";
+import { formatBytes } from "./format";
 
 type Phase = "queued" | "uploading" | "server" | "done" | "error";
 
@@ -17,18 +19,6 @@ interface Job {
 
 const MAX_RETRIES = 3;
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
-
-export function formatBytes(n: number): string {
-  if (n < 1024) return `${n} B`;
-  const units = ["KB", "MB", "GB", "TB"];
-  let v = n / 1024;
-  let i = 0;
-  while (v >= 1024 && i < units.length - 1) {
-    v /= 1024;
-    i++;
-  }
-  return `${v.toFixed(v < 10 ? 1 : 0)} ${units[i]}`;
-}
 
 function fromServer(u: UploadView): Job {
   return {
@@ -298,9 +288,13 @@ function InstallForm(props: { upload: UploadView; onInstalled: (r: InstallResult
   return (
     <div className="install">
       <ul className="item-list">
-        {upload.items.map((item) => (
+        {upload.items.map((item, index) => (
           <li key={item.key} className={item.existing ? "exists" : ""}>
             <label>
+              <Thumb
+                src={item.image ? `/api/mods/uploads/${upload.id}/items/${index}/image` : null}
+                kind={item.image}
+              />
               <input
                 type="checkbox"
                 disabled={!item.validId}

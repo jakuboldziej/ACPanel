@@ -4,6 +4,8 @@ import { config } from "../config.js";
 import { allocateSlots, writeEntries } from "./entryList.js";
 import { HttpError, assertSafeName, exists, isEmptyDir, listDirs, looseJsonField, moveDir, readLoose } from "./fsutil.js";
 import { backupCfg, getServerKey, readServerCfg } from "./serverCfg.js";
+import { dirSize } from "./archive.js";
+import { findCarImage, type ImageKind } from "./preview.js";
 import { getCurrentTrack, type CurrentTrack } from "./tracks.js";
 
 export interface CarInfo {
@@ -12,6 +14,8 @@ export interface CarInfo {
   enabled: boolean;
   empty: boolean;
   inConfig: boolean;
+  sizeBytes: number;
+  image: ImageKind | null;
 }
 
 export interface CarsState {
@@ -38,12 +42,18 @@ export async function getCarsState(): Promise<CarsState> {
     for (const d of list) {
       const prev = byId.get(d.name);
       if (prev && !prev.empty && d.empty) continue;
+      const full = path.join(dir, d.name);
+      const [name, sizeBytes, image] = d.empty
+        ? [d.name, 0, null]
+        : await Promise.all([displayName(dir, d.name), dirSize(full), findCarImage(full)]);
       byId.set(d.name, {
         id: d.name,
-        name: d.empty ? d.name : await displayName(dir, d.name),
+        name,
         enabled: enabled && !d.empty,
         empty: d.empty,
         inConfig: inConfig.has(d.name),
+        sizeBytes,
+        image: image?.kind ?? null,
       });
     }
   }
@@ -124,4 +134,33 @@ export async function applyCars(wanted: string[], maxSlots = config.maxSlotsPerC
   await writeEntries(new Map(plan.slots.map((s) => [s.car, s.slots])));
 
   return { ...plan, backup, restartNeeded: true };
+}
+
+export async function carDir(id: string): Promise<string> {
+  assertSafeName(id);
+  for (const dir of [config.carsDir, config.carsOffDir]) {
+    const full = path.join(dir, id);
+    if ((await exists(full)) && !(await isEmptyDir(full))) return full;
+  }
+  throw new HttpError(404, `No such car: ${id}`);
+}
+
+export async function deleteCar(id: string): Promise<{ id: string; freedBytes: number }> {
+  assertSafeName(id);
+  const enabled = path.join(config.carsDir, id);
+  const disabled = path.join(config.carsOffDir, id);
+  if ((await exists(enabled)) && !(await isEmptyDir(enabled))) {
+    throw new HttpError(409, `${id} is enabled, disable it first`);
+  }
+  const found = [enabled, disabled];
+  let freedBytes = 0;
+  let any = false;
+  for (const dir of found) {
+    if (!(await exists(dir))) continue;
+    any = true;
+    freedBytes += await dirSize(dir);
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+  if (!any) throw new HttpError(404, `No such car: ${id}`);
+  return { id, freedBytes };
 }

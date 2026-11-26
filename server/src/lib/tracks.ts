@@ -4,6 +4,8 @@ import { config } from "../config.js";
 import { allocateSlots, writeEntries } from "./entryList.js";
 import { HttpError, assertSafeName, exists, listDirs, looseJsonField, readLoose, writeAtomic } from "./fsutil.js";
 import { backupCfg, getServerKey, readServerCfg } from "./serverCfg.js";
+import { dirSize } from "./archive.js";
+import { trackImagePath } from "./preview.js";
 
 export type PitboxSource = "manual" | "ui" | null;
 
@@ -18,6 +20,8 @@ export interface LayoutInfo {
   name: string;
   pitboxes: number | null;
   pitboxesSource: PitboxSource;
+  hasPreview: boolean;
+  hasOutline: boolean;
 }
 
 export interface TrackInfo {
@@ -25,6 +29,7 @@ export interface TrackInfo {
   name: string;
   empty: boolean;
   hasTrackParams: boolean;
+  sizeBytes: number;
   layouts: LayoutInfo[];
 }
 
@@ -107,10 +112,13 @@ async function getTrackInfo(id: string, overrides: Record<string, number>, param
   const layouts = await Promise.all(
     layoutIds.map(async (layout): Promise<LayoutInfo> => {
       const ui = await readUiTrack(id, layout);
+      const trackDir = path.join(config.tracksDir, id);
       return {
         id: layout,
         name: (ui && looseJsonField(ui, "name")) || layout || "default",
         ...(await resolvePitboxes(id, layout, overrides, ui)),
+        hasPreview: await exists(trackImagePath(trackDir, layout, "preview")),
+        hasOutline: await exists(trackImagePath(trackDir, layout, "outline")),
       };
     }),
   );
@@ -120,6 +128,7 @@ async function getTrackInfo(id: string, overrides: Record<string, number>, param
     name: (rootUi && looseJsonField(rootUi, "name")) || id,
     empty: layouts.length === 0,
     hasTrackParams: params.has(id.toLowerCase()),
+    sizeBytes: await dirSize(path.join(config.tracksDir, id)).catch(() => 0),
     layouts,
   };
 }
@@ -208,4 +217,25 @@ export async function setPitboxOverride(track: string, layout: string, pitboxes:
   else delete overrides[key];
   await fs.mkdir(path.dirname(config.pitboxOverrides), { recursive: true });
   await writeAtomic(config.pitboxOverrides, JSON.stringify(overrides, null, 2) + "\n");
+}
+
+export async function trackDir(id: string): Promise<string> {
+  assertSafeName(id);
+  const dir = path.join(config.tracksDir, id);
+  if (!(await exists(dir))) throw new HttpError(404, `No such track: ${id}`);
+  return dir;
+}
+
+export async function deleteTrack(id: string): Promise<{ id: string; freedBytes: number }> {
+  const dir = await trackDir(id);
+  const current = await getCurrentTrack(await readServerCfg());
+  if (current.track === id) throw new HttpError(409, `${id} is the current track, pick another track first`);
+  const freedBytes = await dirSize(dir);
+  await fs.rm(dir, { recursive: true, force: true });
+  const overrides = await readOverrides();
+  const kept = Object.fromEntries(Object.entries(overrides).filter(([k]) => !k.startsWith(`${id}/`)));
+  if (Object.keys(kept).length !== Object.keys(overrides).length) {
+    await writeAtomic(config.pitboxOverrides, JSON.stringify(kept, null, 2) + "\n");
+  }
+  return { id, freedBytes };
 }

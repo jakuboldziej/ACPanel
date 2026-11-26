@@ -9,8 +9,10 @@ import {
   installUpload,
   listUploads,
   uploadSettings,
+  uploadItemImage,
   writeChunk,
 } from "../lib/mods.js";
+import { sendImageInside } from "../lib/preview.js";
 
 export const modsRouter = Router();
 
@@ -54,4 +56,9 @@ modsRouter.post("/uploads/:id/install", async (req, res) => {
 modsRouter.delete("/uploads/:id", async (req, res) => {
   await deleteUpload(req.params.id);
   res.json({ ok: true });
+});
+
+modsRouter.get("/uploads/:id/items/:index/image", async (req, res) => {
+  const { file, root } = await uploadItemImage(req.params.id, Number(req.params.index));
+  await sendImageInside(res, [root], file);
 });

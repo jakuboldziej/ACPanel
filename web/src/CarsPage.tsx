@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatBytes } from "./format";
 import { useServer } from "./ServerContext";
+import { Thumb } from "./Thumb";
 import { api, type ApplyPlan, type CarsState } from "./api";
 
 type Filter = "all" | "on" | "off";
@@ -99,6 +101,22 @@ export function CarsPage() {
     }
   }
 
+  async function removeCar(id: string, name: string, size: number, empty: boolean) {
+    const what = empty ? `the empty folder "${id}"` : `${name} (${id}), ${formatBytes(size)}`;
+    if (!confirm(`Permanently delete ${what} from disk?\n\nThis cannot be undone.`)) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await api.deleteCar(id);
+      setMessage({ kind: "ok", text: `Deleted ${id}, freed ${formatBytes(res.freedBytes)}.` });
+      await load();
+    } catch (e) {
+      setMessage({ kind: "err", text: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!state) return <p className="muted">{message?.text ?? "Loading…"}</p>;
 
   const { track } = state;
@@ -122,6 +140,13 @@ export function CarsPage() {
         <div>
           <div className="label">Selected cars</div>
           <div className="value">{selected.size}</div>
+        </div>
+        <div>
+          <div className="label">Disk (enabled / all)</div>
+          <div className="value">
+            {formatBytes(state.cars.filter((c) => c.enabled).reduce((a, c) => a + c.sizeBytes, 0))}
+            <span className="muted"> / {formatBytes(state.cars.reduce((a, c) => a + c.sizeBytes, 0))}</span>
+          </div>
         </div>
         <div>
           <div className="label">Slots</div>
@@ -180,11 +205,26 @@ export function CarsPage() {
             <li key={c.id} className={`${on ? "on" : ""} ${changed ? "changed" : ""} ${c.empty ? "empty" : ""}`}>
               <label>
                 <input type="checkbox" checked={on} disabled={c.empty} onChange={() => toggle(c.id)} />
-                <span className="name">{c.name}</span>
-                {c.name !== c.id && <span className="id">{c.id}</span>}
-                {c.empty && <span className="tag">empty folder</span>}
+                <Thumb src={c.image ? `/api/cars/${encodeURIComponent(c.id)}/image` : null} kind={c.image} />
+                <span className="car-text">
+                  <span className="name">{c.name}</span>
+                  <span className="id">
+                    {c.name !== c.id ? `${c.id} · ` : ""}
+                    {c.empty ? "empty folder" : formatBytes(c.sizeBytes)}
+                  </span>
+                </span>
                 {on && slotsByCar.has(c.id) && <span className="tag slots">{slotsByCar.get(c.id)} slots</span>}
               </label>
+              {!c.enabled && (
+                <button
+                  className="icon-btn danger"
+                  title={dirty ? "Apply or undo your changes first" : c.empty ? "Remove empty folder" : "Delete from disk"}
+                  disabled={dirty || busy}
+                  onClick={() => void removeCar(c.id, c.name, c.sizeBytes, c.empty)}
+                >
+                  Delete
+                </button>
+              )}
             </li>
           );
         })}

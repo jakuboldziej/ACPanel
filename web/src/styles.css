@@ -174,3 +174,17 @@ a { color: var(--accent); }
 .install-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 8px; }
 .install-actions .slim { display: flex; align-items: center; gap: 6px; font-size: 14px; margin-right: auto; }
 .install-actions button.primary { margin-left: auto; }
+.thumb { width: 72px; height: 40px; object-fit: cover; border-radius: 4px; background: var(--border); flex-shrink: 0; display: inline-block; }
+.thumb.badge { object-fit: contain; padding: 4px; background: var(--card); border: 1px solid var(--border); }
+.thumb.none { opacity: .4; }
+.thumb.large { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; margin-bottom: 8px; }
+.car-list li { display: flex; align-items: center; }
+.car-list label { flex: 1; min-width: 0; }
+.car-text { display: flex; flex-direction: column; min-width: 0; }
+.car-text .name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.icon-btn { padding: 4px 10px; font-size: 13px; margin-right: 8px; }
+.danger { color: #e5534b; }
+.danger:hover:not(:disabled) { border-color: #e5534b; }
+.track-meta { display: flex; align-items: center; justify-content: space-between; margin: -4px 0 8px; font-size: 13px; }
+.track-meta .icon-btn { margin-right: 0; }
+.item-list .thumb { width: 64px; height: 36px; }

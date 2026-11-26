@@ -4,6 +4,8 @@ export interface CarInfo {
   enabled: boolean;
   empty: boolean;
   inConfig: boolean;
+  sizeBytes: number;
+  image: "preview" | "badge" | null;
 }
 
 export interface CarsState {
@@ -37,6 +39,8 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   getCars: () => call<CarsState>("/api/cars"),
+  deleteCar: (id: string) =>
+    call<{ id: string; freedBytes: number }>(`/api/cars/${encodeURIComponent(id)}`, { method: "DELETE" }),
   preview: (enabled: string[], maxSlotsPerCar: number) =>
     call<ApplyPlan>("/api/cars/preview", { method: "POST", body: JSON.stringify({ enabled, maxSlotsPerCar }) }),
   apply: (enabled: string[], maxSlotsPerCar: number) =>
@@ -53,6 +57,8 @@ export interface LayoutInfo {
   name: string;
   pitboxes: number | null;
   pitboxesSource: PitboxSource;
+  hasPreview: boolean;
+  hasOutline: boolean;
 }
 
 export interface TrackInfo {
@@ -60,6 +66,7 @@ export interface TrackInfo {
   name: string;
   empty: boolean;
   hasTrackParams: boolean;
+  sizeBytes: number;
   layouts: LayoutInfo[];
 }
 
@@ -80,6 +87,8 @@ export interface TrackPlan {
 
 export const tracksApi = {
   get: () => call<TracksState>("/api/tracks"),
+  remove: (id: string) =>
+    call<{ id: string; freedBytes: number }>(`/api/tracks/${encodeURIComponent(id)}`, { method: "DELETE" }),
   preview: (track: string, layout: string) =>
     call<TrackPlan>("/api/tracks/preview", { method: "POST", body: JSON.stringify({ track, layout }) }),
   apply: (track: string, layout: string) =>
@@ -194,6 +203,7 @@ export interface ModItem {
   sizeBytes: number;
   existing: "enabled" | "disabled" | "installed" | null;
   validId: boolean;
+  image: "preview" | "badge" | null;
 }
 
 export interface UploadView {

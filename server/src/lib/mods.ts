@@ -6,6 +6,7 @@ import { pipeline } from "node:stream/promises";
 import { Transform, type Readable } from "node:stream";
 import { config } from "../config.js";
 import { dirSize, extractArchive, listArchive } from "./archive.js";
+import { findCarImage, trackImagePath, type ImageKind } from "./preview.js";
 import { HttpError, SAFE_NAME, exists, isEmptyDir, looseJsonField, moveDir, readLoose } from "./fsutil.js";
 
 export const CHUNK_SIZE = 32 * 1024 * 1024;
@@ -26,6 +27,7 @@ export interface ModItem {
   sizeBytes: number;
   existing: ExistingState;
   validId: boolean;
+  image: ImageKind | null;
 }
 
 interface UploadMeta {
@@ -194,6 +196,37 @@ async function itemName(dir: string, kind: ItemKind, id: string): Promise<string
   return (ui && looseJsonField(ui, "name")) || id;
 }
 
+async function firstTrackPreview(dir: string): Promise<string | null> {
+  const root = trackImagePath(dir, "", "preview");
+  if (await exists(root)) return root;
+  const layouts = (await fs.readdir(path.join(dir, "ui"), { withFileTypes: true }).catch(() => []))
+    .filter((d) => d.isDirectory())
+    .map((d) => d.name)
+    .sort((a, b) => a.localeCompare(b));
+  for (const l of layouts) {
+    const file = trackImagePath(dir, l, "preview");
+    if (await exists(file)) return file;
+  }
+  return null;
+}
+
+async function itemImage(dir: string, kind: ItemKind): Promise<{ file: string; kind: ImageKind } | null> {
+  if (kind === "car") return findCarImage(dir);
+  const file = await firstTrackPreview(dir);
+  return file ? { file, kind: "preview" } : null;
+}
+
+export async function uploadItemImage(id: string, index: number): Promise<{ file: string; root: string }> {
+  const meta = await loadMeta(id);
+  if (meta.status !== "ready") throw new HttpError(404, "No image");
+  const item = meta.items[index];
+  if (!item) throw new HttpError(404, "No image");
+  const dir = item.relPath ? path.join(extractDir(id), item.relPath) : extractDir(id);
+  const image = await itemImage(dir, item.kind);
+  if (!image) throw new HttpError(404, "No image");
+  return { file: image.file, root: extractDir(id) };
+}
+
 async function detectItems(root: string, archiveName: string): Promise<ModItem[]> {
   const items: ModItem[] = [];
   const stem = path.basename(archiveName, path.extname(archiveName)).replace(/[^A-Za-z0-9_.-]/g, "_");
@@ -213,6 +246,7 @@ async function detectItems(root: string, archiveName: string): Promise<ModItem[]
         sizeBytes: await dirSize(dir),
         existing: validId ? await existingState(kind, id) : null,
         validId,
+        image: await itemImage(dir, kind).then((i) => i?.kind ?? null),
       });
       return;
     }
@@ -252,10 +286,29 @@ export async function getUpload(id: string): Promise<UploadView> {
 
 const SLIM_DIRS = new Set(["skins", "texture", "sfx", "animations"]);
 
+async function slimSkins(skinsDir: string, keep: string | null): Promise<void> {
+  for (const e of await fs.readdir(skinsDir, { withFileTypes: true })) {
+    const full = path.join(skinsDir, e.name);
+    if (!keep || !keep.startsWith(full + path.sep)) {
+      await fs.rm(full, { recursive: true, force: true });
+      continue;
+    }
+    for (const f of await fs.readdir(full, { withFileTypes: true })) {
+      const file = path.join(full, f.name);
+      if (file !== keep) await fs.rm(file, { recursive: true, force: true });
+    }
+  }
+}
+
 async function slimCar(dir: string): Promise<number> {
   const before = await dirSize(dir);
+  const preview = await findCarImage(dir);
   for (const e of await fs.readdir(dir, { withFileTypes: true })) {
     const full = path.join(dir, e.name);
+    if (e.isDirectory() && e.name.toLowerCase() === "skins") {
+      await slimSkins(full, preview?.kind === "preview" ? preview.file : null);
+      continue;
+    }
     if (e.isDirectory() && SLIM_DIRS.has(e.name.toLowerCase())) await fs.rm(full, { recursive: true, force: true });
     if (e.isFile() && /\.(kn5|fbx|pdf)$/i.test(e.name) && e.name.toLowerCase() !== "collider.kn5") await fs.rm(full, { force: true });
   }

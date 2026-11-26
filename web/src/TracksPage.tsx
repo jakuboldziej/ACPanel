@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatBytes } from "./format";
 import { useServer } from "./ServerContext";
+import { Thumb } from "./Thumb";
 import { tracksApi, type LayoutInfo, type TrackInfo, type TrackPlan, type TracksState } from "./api";
 
 interface Selection {
@@ -96,6 +98,23 @@ export function TracksPage() {
     }
   }
 
+  async function removeTrack(t: TrackInfo) {
+    const what = t.empty ? `the empty folder "${t.id}"` : `${t.name} (${t.id}), ${formatBytes(t.sizeBytes)}`;
+    if (!confirm(`Permanently delete ${what} from disk?\n\nThis cannot be undone.`)) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await tracksApi.remove(t.id);
+      setMessage({ kind: "ok", text: `Deleted ${t.id}, freed ${formatBytes(res.freedBytes)}.` });
+      if (selected?.track === t.id) setSelected(null);
+      await load();
+    } catch (e) {
+      setMessage({ kind: "err", text: (e as Error).message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!state) return <p className="muted">{message?.text ?? "Loading…"}</p>;
 
   const { current } = state;
@@ -114,6 +133,10 @@ export function TracksPage() {
         <div>
           <div className="label">Enabled cars</div>
           <div className="value">{state.enabledCars}</div>
+        </div>
+        <div>
+          <div className="label">Tracks on disk</div>
+          <div className="value">{formatBytes(state.tracks.reduce((a, t) => a + t.sizeBytes, 0))}</div>
         </div>
       </section>
 
@@ -161,6 +184,7 @@ export function TracksPage() {
             selected={selected}
             onSelect={(layout) => setSelected({ track: t.id, layout })}
             onPitboxesSaved={load}
+            onDelete={() => void removeTrack(t)}
           />
         ))}
         {visible.length === 0 && <li className="muted">No tracks</li>}
@@ -175,10 +199,20 @@ function TrackCard(props: {
   selected: Selection | null;
   onSelect: (layout: string) => void;
   onPitboxesSaved: () => Promise<void>;
+  onDelete: () => void;
 }) {
   const { track } = props;
+  const isCurrentTrack = props.current.track === track.id;
+  const focus = props.selected?.track === track.id ? props.selected.layout : isCurrentTrack ? props.current.layout : null;
+  const previewLayout =
+    track.layouts.find((l) => l.id === focus && l.hasPreview) ?? track.layouts.find((l) => l.hasPreview) ?? null;
+  const src = previewLayout
+    ? `/api/tracks/${encodeURIComponent(track.id)}/image?layout=${encodeURIComponent(previewLayout.id)}`
+    : null;
+
   return (
     <li className={`card track ${track.empty ? "empty" : ""}`}>
+      {src && <Thumb src={src} large />}
       <div className="track-head">
         <span className="name">{track.name}</span>
         {track.name !== track.id && <span className="id">{track.id}</span>}
@@ -187,6 +221,14 @@ function TrackCard(props: {
           <span className="tag warn" title="Missing from cfg/data_track_params.ini">
             no track params
           </span>
+        )}
+      </div>
+      <div className="track-meta">
+        <span className="muted">{track.empty ? "empty folder" : formatBytes(track.sizeBytes)}</span>
+        {!isCurrentTrack && (
+          <button className="icon-btn danger" onClick={props.onDelete}>
+            Delete
+          </button>
         )}
       </div>
       {track.layouts.length > 0 && (
