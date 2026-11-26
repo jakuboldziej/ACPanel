@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { CarsPage } from "./CarsPage";
+import { LogsPage } from "./LogsPage";
+import { ServerProvider } from "./ServerContext";
+import { ServerError, StatusBar } from "./StatusBar";
 import { TracksPage } from "./TracksPage";
 
-const tabs = { cars: "Cars", tracks: "Tracks" } as const;
+const tabs = { cars: "Cars", tracks: "Tracks", logs: "Logs" } as const;
 type Tab = keyof typeof tabs;
 
 function tabFromHash(): Tab {
@@ -20,18 +23,26 @@ export function App() {
   }, []);
 
   return (
-    <div className="app">
-      <header className="topbar">
-        <h1>AC Panel</h1>
-        <nav>
-          {(Object.keys(tabs) as Tab[]).map((t) => (
-            <a key={t} href={`#${t}`} className={tab === t ? "active" : ""}>
-              {tabs[t]}
-            </a>
-          ))}
-        </nav>
-      </header>
-      <main>{tab === "cars" ? <CarsPage /> : <TracksPage />}</main>
-    </div>
+    <ServerProvider>
+      <div className="app">
+        <header className="topbar">
+          <h1>AC Panel</h1>
+          <nav>
+            {(Object.keys(tabs) as Tab[]).map((t) => (
+              <a key={t} href={`#${t}`} className={tab === t ? "active" : ""}>
+                {tabs[t]}
+              </a>
+            ))}
+          </nav>
+          <StatusBar />
+        </header>
+        <ServerError />
+        <main>
+          {tab === "cars" && <CarsPage />}
+          {tab === "tracks" && <TracksPage />}
+          {tab === "logs" && <LogsPage />}
+        </main>
+      </div>
+    </ServerProvider>
   );
 }

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useServer } from "./ServerContext";
 import { tracksApi, type LayoutInfo, type TrackInfo, type TrackPlan, type TracksState } from "./api";
 
 interface Selection {
@@ -11,6 +12,7 @@ function label(track: string, layout: string) {
 }
 
 export function TracksPage() {
+  const server = useServer();
   const [state, setState] = useState<TracksState | null>(null);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Selection | null>(null);
@@ -82,10 +84,11 @@ export function TracksPage() {
       const res = await tracksApi.apply(selected.track, selected.layout);
       setMessage({
         kind: "ok",
-        text: `Saved ${label(res.track, res.layout)} (${res.totalSlots} slots). Backup: ${res.backup}. Restart the server to apply.`,
+        text: `Saved ${label(res.track, res.layout)} (${res.totalSlots} slots). Backup: ${res.backup}. Restart the server to apply (button at the top).`,
       });
       setSelected(null);
       await load();
+      void server.refresh();
     } catch (e) {
       setMessage({ kind: "err", text: (e as Error).message });
     } finally {

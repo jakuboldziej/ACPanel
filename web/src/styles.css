@@ -91,3 +91,19 @@ code { font-size: 90%; }
 .pitboxes.unknown { background: var(--warn); }
 .pitbox-edit { display: flex; gap: 4px; }
 .pitbox-edit input { width: 70px; }
+.topbar { flex-wrap: wrap; }
+.status { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 14px; flex-wrap: wrap; }
+.status button.primary { margin-left: 0; }
+.dot { width: 10px; height: 10px; border-radius: 50%; background: var(--muted); display: inline-block; }
+.dot.on { background: #2ea043; }
+.dot.off { background: #d6402b; }
+.dot.busy { background: #e0b000; animation: pulse 1s infinite alternate; }
+@keyframes pulse { from { opacity: 1; } to { opacity: .3; } }
+.logs .toolbar { align-items: center; margin-top: 0; }
+.logs .toolbar button.active { background: var(--text); color: var(--bg); }
+.live { font-size: 13px; color: var(--muted); }
+.live.on { color: #2ea043; }
+.log-box { height: calc(100vh - 220px); min-height: 300px; overflow: auto; margin: 0; padding: 12px; font: 12.5px/1.45 ui-monospace, "Cascadia Code", Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+.log-line.lvl-WRN { color: #c98a00; }
+.log-line.lvl-ERR, .log-line.lvl-FTL { color: #e5534b; font-weight: 600; }
+.log-line.lvl-DBG, .log-line.lvl-VRB { color: var(--muted); }

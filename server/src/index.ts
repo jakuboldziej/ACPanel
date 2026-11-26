@@ -7,6 +7,7 @@ import { config } from "./config.js";
 import { HttpError } from "./lib/fsutil.js";
 import { carsRouter } from "./routes/cars.js";
 import { tracksRouter } from "./routes/tracks.js";
+import { serverRouter } from "./routes/server.js";
 
 const app = express();
 app.disable("x-powered-by");
@@ -17,6 +18,7 @@ app.get("/api/health", (_req, res) => {
 });
 app.use("/api/cars", carsRouter);
 app.use("/api/tracks", tracksRouter);
+app.use("/api/server", serverRouter);
 app.use("/api", (_req, res) => {
   res.status(404).json({ error: "No such endpoint" });
 });

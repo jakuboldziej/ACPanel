@@ -15,6 +15,7 @@ const acRoot = path.resolve(repoRoot, process.env.AC_ROOT || "/acserver/acserver
 
 export const config = {
   port: int("PORT", 8090),
+  serviceUnit: process.env.ACSERVER_UNIT ?? "acserver",
   maxSlotsPerCar: int("MAX_SLOTS_PER_CAR", 3),
   acRoot,
   carsDir: path.join(acRoot, "content", "cars"),
@@ -25,4 +26,5 @@ export const config = {
   backupsDir: path.join(acRoot, "panel-backups"),
   trackParams: path.join(acRoot, "cfg", "data_track_params.ini"),
   pitboxOverrides: path.join(acRoot, "panel-data", "pitboxes.json"),
+  extraCfg: path.join(acRoot, "cfg", "extra_cfg.yml"),
 };

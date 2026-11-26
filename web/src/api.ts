@@ -87,3 +87,29 @@ export const tracksApi = {
   setPitboxes: (track: string, layout: string, pitboxes: number | null) =>
     call<{ ok: true }>("/api/tracks/pitboxes", { method: "PUT", body: JSON.stringify({ track, layout, pitboxes }) }),
 };
+
+export interface LiveInfo {
+  name: string;
+  track: string;
+  clients: number;
+  maxClients: number;
+  cars: string[];
+}
+
+export interface ServiceStatus {
+  managed: boolean;
+  unit: string;
+  active: boolean;
+  state: string;
+  pid: number | null;
+  since: string | null;
+  live: LiveInfo | null;
+  configChangedAt: string | null;
+  restartRequired: boolean;
+}
+
+export const serverApi = {
+  status: () => call<ServiceStatus>("/api/server/status"),
+  restart: () => call<ServiceStatus & { ready: boolean }>("/api/server/restart", { method: "POST" }),
+  logs: (lines: number) => call<{ lines: string[] }>(`/api/server/logs?lines=${lines}`),
+};

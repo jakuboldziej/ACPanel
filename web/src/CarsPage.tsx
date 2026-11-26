@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useServer } from "./ServerContext";
 import { api, type ApplyPlan, type CarsState } from "./api";
 
 type Filter = "all" | "on" | "off";
 
 export function CarsPage() {
+  const server = useServer();
   const [state, setState] = useState<CarsState | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [maxSlots, setMaxSlots] = useState(3);
@@ -86,9 +88,10 @@ export function CarsPage() {
       const res = await api.apply([...selected], maxSlots);
       setMessage({
         kind: "ok",
-        text: `Saved (${res.totalSlots} slots). Backup: ${res.backup}. Restart the server for the changes to take effect.`,
+        text: `Saved (${res.totalSlots} slots). Backup: ${res.backup}. Restart the server to apply (button at the top).`,
       });
       await load();
+      void server.refresh();
     } catch (e) {
       setMessage({ kind: "err", text: (e as Error).message });
     } finally {
