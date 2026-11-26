@@ -40,10 +40,13 @@ export function setServerKeys(ini: string, values: Record<string, string>): stri
       pending.delete(key);
     }
   }
+  if (inServer) serverEnd = lines.length;
   if (pending.size) {
     if (serverEnd === -1) throw new Error("Missing [SERVER] section in server_cfg.ini");
     const add = [...pending].map(([k, v]) => `${k}=${v}`);
-    lines.splice(serverEnd, 0, ...add);
+    let at = serverEnd;
+    while (at > 0 && lines[at - 1]!.trim() === "") at--;
+    lines.splice(at, 0, ...add);
   }
   return lines.join(eol);
 }

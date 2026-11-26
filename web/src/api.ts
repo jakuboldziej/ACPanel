@@ -293,3 +293,17 @@ export function uploadChunk(
     xhr.send(blob);
   });
 }
+
+export interface Rules {
+  cutPenalties: boolean;
+  allowedTyresOut: number;
+  gasPenalty: boolean;
+  startRule: 0 | 1 | 2;
+  contactLimit: boolean;
+  maxContactsPerKm: number;
+}
+
+export const rulesApi = {
+  get: () => call<Rules>("/api/rules"),
+  save: (rules: Rules) => call<{ backup: string; rules: Rules }>("/api/rules", { method: "PUT", body: JSON.stringify(rules) }),
+};

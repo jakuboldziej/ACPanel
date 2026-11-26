@@ -14,6 +14,7 @@ import { serverRouter } from "./routes/server.js";
 import { pluginsRouter } from "./routes/plugins.js";
 import { extraConfigRouter } from "./routes/extraConfig.js";
 import { modsRouter } from "./routes/mods.js";
+import { rulesRouter } from "./routes/rules.js";
 import { cleanupStaleUploads, markInterruptedUploads } from "./lib/mods.js";
 
 if (!isValidHash(config.adminPasswordHash)) {
@@ -49,6 +50,7 @@ app.use("/api/server", serverRouter);
 app.use("/api/plugins", pluginsRouter);
 app.use("/api/extra-config", extraConfigRouter);
 app.use("/api/mods", modsRouter);
+app.use("/api/rules", rulesRouter);
 app.use("/api", (_req, res) => {
   res.status(404).json({ error: "No such endpoint" });
 });
