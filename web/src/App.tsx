@@ -6,12 +6,14 @@ import { LogsPage } from "./LogsPage";
 import { ModsPage } from "./ModsPage";
 import { PluginsPage } from "./PluginsPage";
 import { RulesPage } from "./RulesPage";
+import { SessionsPage } from "./SessionsPage";
+import { PresetsPage } from "./PresetsPage";
 import { ServerProvider } from "./ServerContext";
 import { ServerError, StatusBar } from "./StatusBar";
 import { SettingsPage } from "./SettingsPage";
 import { TracksPage } from "./TracksPage";
 
-const tabs = { cars: "Cars", tracks: "Tracks", rules: "Rules", plugins: "Plugins", settings: "Settings", mods: "Mods", logs: "Logs" } as const;
+const tabs = { cars: "Cars", tracks: "Tracks", sessions: "Sessions", rules: "Rules", presets: "Presets", plugins: "Plugins", settings: "Settings", mods: "Mods", logs: "Logs" } as const;
 type Tab = keyof typeof tabs;
 
 function tabFromHash(): Tab {
@@ -72,7 +74,9 @@ function Panel({ onLogout }: { onLogout: () => void }) {
         <main>
           {tab === "cars" && <CarsPage />}
           {tab === "tracks" && <TracksPage />}
+          {tab === "sessions" && <SessionsPage />}
           {tab === "rules" && <RulesPage />}
+          {tab === "presets" && <PresetsPage />}
           {tab === "plugins" && <PluginsPage />}
           {tab === "settings" && <SettingsPage />}
           {tab === "mods" && <ModsPage />}

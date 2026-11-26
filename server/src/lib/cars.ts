@@ -131,24 +131,48 @@ async function moveCar(id: string, fromDir: string, toDir: string): Promise<void
   await moveDir(path.join(fromDir, id), dst);
 }
 
-export async function applyCars(wanted: string[], maxSlots = config.maxSlotsPerCar) {
-  const plan = await planCars(wanted, maxSlots);
-
-  for (const id of plan.enable) {
+async function assertMovable(enable: string[], disable: string[]): Promise<void> {
+  for (const id of enable) {
     const dst = path.join(config.carsDir, id);
     if ((await exists(dst)) && !(await isEmptyDir(dst))) throw new HttpError(409, `${dst} already exists`);
   }
-  for (const id of plan.disable) {
+  for (const id of disable) {
     const dst = path.join(config.carsOffDir, id);
     if ((await exists(dst)) && !(await isEmptyDir(dst))) throw new HttpError(409, `${dst} already exists`);
   }
+}
 
+async function moveCars(enable: string[], disable: string[]): Promise<void> {
+  for (const id of disable) await moveCar(id, config.carsDir, config.carsOffDir);
+  for (const id of enable) await moveCar(id, config.carsOffDir, config.carsDir);
+}
+
+export async function planEnabledCars(wanted: string[]): Promise<{ enable: string[]; disable: string[]; missing: string[] }> {
+  const state = await getCarsState();
+  const byId = new Map(state.cars.map((c) => [c.id, c]));
+  const wantedSet = new Set(wanted);
+  return {
+    enable: [...wantedSet].filter((id) => byId.get(id) && !byId.get(id)!.empty && !byId.get(id)!.enabled),
+    disable: state.cars.filter((c) => c.enabled && !wantedSet.has(c.id)).map((c) => c.id),
+    missing: [...wantedSet].filter((id) => !byId.get(id) || byId.get(id)!.empty),
+  };
+}
+
+export async function syncEnabledCars(wanted: string[]): Promise<{ enable: string[]; disable: string[] }> {
+  wanted.forEach(assertSafeName);
+  const plan = await planEnabledCars(wanted);
+  if (plan.missing.length) throw new HttpError(409, `Missing cars: ${plan.missing.join(", ")}`);
+  await assertMovable(plan.enable, plan.disable);
+  await moveCars(plan.enable, plan.disable);
+  return { enable: plan.enable, disable: plan.disable };
+}
+
+export async function applyCars(wanted: string[], maxSlots = config.maxSlotsPerCar) {
+  const plan = await planCars(wanted, maxSlots);
+  await assertMovable(plan.enable, plan.disable);
   const backup = await backupCfg();
-  for (const id of plan.disable) await moveCar(id, config.carsDir, config.carsOffDir);
-  for (const id of plan.enable) await moveCar(id, config.carsOffDir, config.carsDir);
-
+  await moveCars(plan.enable, plan.disable);
   await writeEntries(new Map(plan.slots.map((s) => [s.car, s.slots])));
-
   return { ...plan, backup, restartNeeded: true };
 }
 

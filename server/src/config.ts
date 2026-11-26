@@ -47,6 +47,7 @@ export const config = {
   cfgDir: path.join(acRoot, "cfg"),
   pluginsDir: path.join(acRoot, "plugins"),
   extraCfgSchema: path.join(acRoot, "cfg", "schemas", "extra_cfg.schema.json"),
+  presetsDir: dirFromEnv("PRESETS_DIR", path.join(acRoot, "presets")),
   uploadsDir: dirFromEnv("UPLOADS_DIR", path.join(acRoot, "panel-data", "uploads")),
   maxUploadMb: int("MAX_UPLOAD_MB", 8192),
   maxExtractMb: int("MAX_EXTRACT_MB", 30720),

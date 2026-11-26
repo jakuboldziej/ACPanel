@@ -307,3 +307,75 @@ export const rulesApi = {
   get: () => call<Rules>("/api/rules"),
   save: (rules: Rules) => call<{ backup: string; rules: Rules }>("/api/rules", { method: "PUT", body: JSON.stringify(rules) }),
 };
+
+export interface TimedSession {
+  enabled: boolean;
+  name: string;
+  minutes: number;
+  isOpen: boolean;
+}
+
+export interface Weather {
+  graphics: string;
+  ambient: number;
+  road: number;
+  variationAmbient: number;
+  variationRoad: number;
+  windMin: number;
+  windMax: number;
+  windDirection: number;
+  windDirectionVariation: number;
+}
+
+export interface SessionsConfig {
+  practice: TimedSession;
+  qualify: TimedSession;
+  race: {
+    enabled: boolean;
+    name: string;
+    mode: "laps" | "time";
+    laps: number;
+    minutes: number;
+    extraLap: boolean;
+    waitSeconds: number;
+    joinRule: 0 | 1 | 2;
+  };
+  sunAngle: number;
+  timeMultiplier: number;
+  loopMode: boolean;
+  raceOverSeconds: number;
+  dynamicTrack: { enabled: boolean; sessionStart: number; randomness: number; sessionTransfer: number; lapGain: number };
+  weathers: Weather[];
+}
+
+export const sessionsApi = {
+  get: () => call<SessionsConfig>("/api/sessions"),
+  save: (s: SessionsConfig) =>
+    call<{ backup: string; sessions: SessionsConfig }>("/api/sessions", { method: "PUT", body: JSON.stringify(s) }),
+};
+
+export interface PresetInfo {
+  name: string;
+  serverName: string | null;
+  track: string;
+  layout: string;
+  cars: string[];
+  slots: number;
+  sessions: string;
+  files: string[];
+  modifiedAt: string;
+  active: boolean;
+  missingCars: string[];
+  missingTrack: boolean;
+}
+
+export const presetsApi = {
+  list: () => call<{ presets: PresetInfo[] }>("/api/presets"),
+  save: (name: string, overwrite: boolean) =>
+    call<{ presets: PresetInfo[] }>("/api/presets", { method: "POST", body: JSON.stringify({ name, overwrite }) }),
+  apply: (name: string) =>
+    call<{ backup: string; enabled: string[]; disabled: string[] }>(`/api/presets/${encodeURIComponent(name)}/apply`, {
+      method: "POST",
+    }),
+  remove: (name: string) => call<{ ok: true }>(`/api/presets/${encodeURIComponent(name)}`, { method: "DELETE" }),
+};

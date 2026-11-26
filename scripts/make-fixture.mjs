@@ -99,12 +99,45 @@ w(
     "CONFIG_TRACK=nordschleife",
     "TRACK=ks_nordschleife",
     "MAX_CLIENTS=9",
+    "SUN_ANGLE=16",
+    "ALLOWED_TYRES_OUT=2",
     "",
     "[PRACTICE]",
     "NAME=Practice",
     "TIME=60",
+    "IS_OPEN=1",
+    "",
+    "[QUALIFY]",
+    "NAME=Qualify",
+    "TIME=10",
+    "IS_OPEN=1",
+    "",
+    "[RACE]",
+    "NAME=Race",
+    "LAPS=5",
+    "WAIT_TIME=60",
+    "IS_OPEN=1",
+    "",
+    "[DYNAMIC_TRACK]",
+    "SESSION_START=95",
+    "RANDOMNESS=2",
+    "SESSION_TRANSFER=90",
+    "LAP_GAIN=10",
+    "",
+    "[WEATHER_0]",
+    "GRAPHICS=3_clear",
+    "BASE_TEMPERATURE_AMBIENT=22",
+    "BASE_TEMPERATURE_ROAD=8",
+    "VARIATION_AMBIENT=1",
+    "VARIATION_ROAD=1",
     "",
   ].join("\r\n"),
 );
-w("cfg/entry_list.ini", "");
+w(
+  "cfg/entry_list.ini",
+  on
+    .flatMap((model, i) => [0, 1, 2].map((k) => ({ model, n: i * 3 + k })))
+    .map(({ model, n }) => `[CAR_${n}]\r\nMODEL=${model}\r\nSKIN=\r\nSPECTATOR_MODE=0\r\nDRIVERNAME=\r\nTEAM=\r\nGUID=\r\nBALLAST=0\r\nRESTRICTOR=0\r\n`)
+    .join("\r\n"),
+);
 console.log(`Done: ${root}`);

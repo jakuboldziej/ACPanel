@@ -1,0 +1,110 @@
+import { execFileSync } from "node:child_process";
+import fs from "node:fs";
+import path from "node:path";
+import { Readable } from "node:stream";
+import { beforeEach, describe, expect, it } from "vitest";
+import { hasCommand, makeFixture, tmpDir, withAcRoot } from "./helpers.js";
+
+let acRoot: string;
+
+beforeEach(async () => {
+  acRoot = makeFixture();
+  await withAcRoot(acRoot);
+});
+
+const enabledCars = () => fs.readdirSync(path.join(acRoot, "content", "cars")).sort();
+
+describe("cars", () => {
+  it("enables and disables cars and writes entry_list", async () => {
+    const { applyCars } = await import("../src/lib/cars.js");
+    const res = await applyCars(["abarth500", "bmw_m3_e30"], 3);
+    expect(res.enable).toEqual(["abarth500"]);
+    expect(enabledCars()).toEqual(["abarth500", "bmw_m3_e30"]);
+    const cfg = fs.readFileSync(path.join(acRoot, "cfg", "server_cfg.ini"), "utf8");
+    expect(cfg).toContain("CARS=abarth500;bmw_m3_e30");
+    expect(cfg).toContain("MAX_CLIENTS=6");
+  });
+
+  it("refuses empty placeholder folders and unsafe names", async () => {
+    const { applyCars } = await import("../src/lib/cars.js");
+    await expect(applyCars(["ks_empty_placeholder"])).rejects.toThrow(/empty folder/);
+    await expect(applyCars(["../etc"])).rejects.toThrow(/Invalid name/);
+  });
+});
+
+describe("presets", () => {
+  it("saves, detects as current and restores cars and track", async () => {
+    const presets = await import("../src/lib/presets.js");
+    const cars = await import("../src/lib/cars.js");
+    const tracks = await import("../src/lib/tracks.js");
+
+    const saved = await presets.savePreset("gt", false);
+    expect(saved.find((p) => p.name === "gt")).toMatchObject({ active: true, track: "ks_nordschleife", slots: 9 });
+    await expect(presets.savePreset("gt", false)).rejects.toThrow(/already exists/);
+
+    await cars.applyCars(["abarth500"], 3);
+    await tracks.applyTrack("magione", "", 3);
+    expect((await presets.listPresets())[0]!.active).toBe(false);
+
+    const res = await presets.applyPreset("gt");
+    expect(res.disabled).toEqual(["abarth500"]);
+    expect(enabledCars()).toEqual(["bmw_m3_e30", "ks_ferrari_488_gt3", "ks_mazda_mx5_cup"]);
+    expect((await presets.listPresets())[0]!.active).toBe(true);
+  });
+
+  it("refuses presets with missing cars", async () => {
+    const presets = await import("../src/lib/presets.js");
+    const dir = path.join(acRoot, "presets", "broken");
+    fs.mkdirSync(dir, { recursive: true });
+    fs.copyFileSync(path.join(acRoot, "cfg", "server_cfg.ini"), path.join(dir, "server_cfg.ini"));
+    fs.writeFileSync(path.join(dir, "entry_list.ini"), "[CAR_0]\nMODEL=not_installed\n");
+    await expect(presets.applyPreset("broken")).rejects.toThrow(/not_installed/);
+    await expect(presets.applyPreset("../x")).rejects.toThrow(/Invalid name/);
+  });
+});
+
+describe.skipIf(!hasCommand("7z"))("mod upload", () => {
+  it("uploads, detects and installs a car with stripping", async () => {
+    const src = tmpDir();
+    const car = path.join(src, "test_car");
+    fs.mkdirSync(path.join(car, "skins", "red"), { recursive: true });
+    fs.mkdirSync(path.join(car, "ui"));
+    fs.writeFileSync(path.join(car, "data.acd"), "x");
+    fs.writeFileSync(path.join(car, "collider.kn5"), "x");
+    fs.writeFileSync(path.join(car, "test_car.kn5"), Buffer.alloc(100_000));
+    fs.writeFileSync(path.join(car, "skins", "red", "preview.jpg"), "jpg");
+    fs.writeFileSync(path.join(car, "skins", "red", "livery.png"), "png");
+    fs.writeFileSync(path.join(car, "ui", "ui_car.json"), '{ "name": "Test Car" }');
+    const archive = path.join(src, "test_car.zip");
+    execFileSync("7z", ["a", "-bd", archive, "test_car"], { cwd: src, stdio: "ignore" });
+    const bytes = fs.readFileSync(archive);
+
+    const mods = await import("../src/lib/mods.js");
+    const created = await mods.createUpload("test_car.zip", bytes.length);
+    await mods.writeChunk(created.id, 0, Readable.from(bytes));
+    await mods.completeUpload(created.id);
+    let upload = await mods.getUpload(created.id);
+    for (let i = 0; i < 50 && upload.status === "extracting"; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      upload = await mods.getUpload(created.id);
+    }
+    expect(upload.status).toBe("ready");
+    expect(upload.items).toEqual([
+      expect.objectContaining({ kind: "car", id: "test_car", name: "Test Car", existing: null, image: "preview" }),
+    ]);
+
+    const res = await mods.installUpload(created.id, [{ key: upload.items[0]!.key, overwrite: false }], true);
+    expect(res.installed[0]!.slimmedBytes).toBeGreaterThan(90_000);
+    const target = path.join(acRoot, "content", "cars_off", "test_car");
+    expect(fs.existsSync(path.join(target, "data.acd"))).toBe(true);
+    expect(fs.existsSync(path.join(target, "collider.kn5"))).toBe(true);
+    expect(fs.existsSync(path.join(target, "test_car.kn5"))).toBe(false);
+    expect(fs.readdirSync(path.join(target, "skins", "red"))).toEqual(["preview.jpg"]);
+  });
+
+  it("rejects an oversized chunk", async () => {
+    const mods = await import("../src/lib/mods.js");
+    const created = await mods.createUpload("a.zip", 5);
+    await expect(mods.writeChunk(created.id, 0, Readable.from(Buffer.alloc(10)))).rejects.toThrow(/larger than expected/);
+  });
+});
