@@ -58,7 +58,8 @@ export async function listArchive(file: string): Promise<ArchiveListing> {
     if (!p) continue;
     if (isUnsafePath(p)) throw new HttpError(400, `Archive contains an unsafe path: ${p}`);
     const attrs = fields.get("Attributes") ?? "";
-    if (/\bl[r-][w-][x-]/.test(attrs) || fields.has("Symbolic Link") || fields.has("Link")) {
+    const linked = ["Symbolic Link", "Hard Link", "Link"].some((k) => (fields.get(k) ?? "") !== "");
+    if (/\bl[r-][w-][x-]/.test(attrs) || linked) {
       throw new HttpError(400, `Archive contains a symlink: ${p}`);
     }
     if (fields.get("Folder") === "+") continue;
@@ -77,6 +78,9 @@ export async function extractArchive(file: string, dest: string): Promise<void> 
   await fs.mkdir(dest, { recursive: true });
   const r = await run7z(["x", "-y", "-bd", "-sccUTF-8", "-pacpanel-no-password", `-o${dest}`, file], 60 * 60_000);
   if (r.code !== 0) {
+    if (/unsupported method/i.test(r.stderr) && /\.rar$/i.test(file)) {
+      throw new HttpError(400, "This 7z build cannot unpack RAR files. Install RAR support on the server: sudo apt install 7zip-rar");
+    }
     const reason = /wrong password|encrypted/i.test(r.stderr)
       ? "the archive is password protected"
       : r.stderr.trim().split("\n").pop() || `7z exit code ${r.code}`;
