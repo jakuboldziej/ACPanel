@@ -13,6 +13,8 @@ import { tracksRouter } from "./routes/tracks.js";
 import { serverRouter } from "./routes/server.js";
 import { pluginsRouter } from "./routes/plugins.js";
 import { extraConfigRouter } from "./routes/extraConfig.js";
+import { modsRouter } from "./routes/mods.js";
+import { cleanupStaleUploads, markInterruptedUploads } from "./lib/mods.js";
 
 if (!isValidHash(config.adminPasswordHash)) {
   console.error("ADMIN_PASSWORD_HASH is missing or invalid. Run `npm run hash-password` and put the result in .env");
@@ -46,6 +48,7 @@ app.use("/api/tracks", tracksRouter);
 app.use("/api/server", serverRouter);
 app.use("/api/plugins", pluginsRouter);
 app.use("/api/extra-config", extraConfigRouter);
+app.use("/api/mods", modsRouter);
 app.use("/api", (_req, res) => {
   res.status(404).json({ error: "No such endpoint" });
 });
@@ -67,6 +70,10 @@ const onError: ErrorRequestHandler = (err, _req, res, _next) => {
   }
 };
 app.use(onError);
+
+await markInterruptedUploads();
+void cleanupStaleUploads();
+setInterval(() => void cleanupStaleUploads(), 60 * 60 * 1000).unref();
 
 app.listen(config.port, config.host, () => {
   console.log(`AC Panel: http://${config.host}:${config.port}  (AC_ROOT=${config.acRoot})`);

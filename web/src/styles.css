@@ -149,3 +149,28 @@ select { font: inherit; color: inherit; padding: 6px 10px; border: 1px solid var
 .field-key { font-weight: 600; min-width: 280px; }
 .field-main input[type="text"], .field-main input[type="number"] { min-width: 220px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--card); }
 .field-desc, .field-default { margin: 4px 0 0; font-size: 13px; }
+.lan-hint { margin-top: 0; margin-bottom: 12px; }
+a { color: var(--accent); }
+.dropzone { border: 2px dashed var(--border); text-align: center; padding: 36px 16px; cursor: pointer; transition: border-color .15s, background .15s; }
+.dropzone:hover, .dropzone.dragging { border-color: var(--accent); }
+.dropzone.dragging { background: var(--on); }
+.dropzone-title { font-size: 17px; font-weight: 600; margin-bottom: 4px; }
+.job-list { list-style: none; padding: 0; margin: 16px 0 0; display: flex; flex-direction: column; gap: 10px; }
+.job { display: flex; flex-direction: column; gap: 10px; }
+.job .msg { margin-top: 0; }
+.job-head { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; }
+.job-head .name { font-weight: 600; word-break: break-all; }
+.job-phase { margin-left: auto; font-size: 14px; }
+.job.phase-error .job-phase { color: #e5534b; }
+.job.phase-done .job-phase { color: #2ea043; }
+.progress { height: 6px; border-radius: 3px; background: var(--border); overflow: hidden; }
+.progress > div { height: 100%; background: var(--accent); transition: width .2s; }
+.progress.indeterminate > div { animation: pulse 1s infinite alternate; }
+.item-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.item-list label { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; cursor: pointer; }
+.item-list li.exists label { background: var(--warn); }
+.item-list .tag { margin-left: 0; }
+.item-list .id { font-size: 12px; color: var(--muted); }
+.install-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-top: 8px; }
+.install-actions .slim { display: flex; align-items: center; gap: 6px; font-size: 14px; margin-right: auto; }
+.install-actions button.primary { margin-left: auto; }

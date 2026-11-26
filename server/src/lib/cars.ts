@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { config } from "../config.js";
 import { allocateSlots, writeEntries } from "./entryList.js";
-import { HttpError, assertSafeName, exists, isEmptyDir, listDirs, looseJsonField, readLoose } from "./fsutil.js";
+import { HttpError, assertSafeName, exists, isEmptyDir, listDirs, looseJsonField, moveDir, readLoose } from "./fsutil.js";
 import { backupCfg, getServerKey, readServerCfg } from "./serverCfg.js";
 import { getCurrentTrack, type CurrentTrack } from "./tracks.js";
 
@@ -102,7 +102,7 @@ async function moveCar(id: string, fromDir: string, toDir: string): Promise<void
     await fs.rmdir(dst);
   }
   await fs.mkdir(toDir, { recursive: true });
-  await fs.rename(path.join(fromDir, id), dst);
+  await moveDir(path.join(fromDir, id), dst);
 }
 
 export async function applyCars(wanted: string[], maxSlots = config.maxSlotsPerCar) {

@@ -3,13 +3,14 @@ import { authApi, UNAUTHORIZED_EVENT } from "./api";
 import { CarsPage } from "./CarsPage";
 import { LoginPage } from "./LoginPage";
 import { LogsPage } from "./LogsPage";
+import { ModsPage } from "./ModsPage";
 import { PluginsPage } from "./PluginsPage";
 import { ServerProvider } from "./ServerContext";
 import { ServerError, StatusBar } from "./StatusBar";
 import { SettingsPage } from "./SettingsPage";
 import { TracksPage } from "./TracksPage";
 
-const tabs = { cars: "Cars", tracks: "Tracks", plugins: "Plugins", settings: "Settings", logs: "Logs" } as const;
+const tabs = { cars: "Cars", tracks: "Tracks", plugins: "Plugins", settings: "Settings", mods: "Mods", logs: "Logs" } as const;
 type Tab = keyof typeof tabs;
 
 function tabFromHash(): Tab {
@@ -72,6 +73,7 @@ function Panel({ onLogout }: { onLogout: () => void }) {
           {tab === "tracks" && <TracksPage />}
           {tab === "plugins" && <PluginsPage />}
           {tab === "settings" && <SettingsPage />}
+          {tab === "mods" && <ModsPage />}
           {tab === "logs" && <LogsPage />}
         </main>
       </div>

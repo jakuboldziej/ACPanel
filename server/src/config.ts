@@ -13,6 +13,11 @@ function int(name: string, def: number): number {
 
 const acRoot = path.resolve(repoRoot, process.env.AC_ROOT || "/acserver/acserver");
 
+function dirFromEnv(name: string, def: string): string {
+  const v = process.env[name];
+  return v ? path.resolve(repoRoot, v) : def;
+}
+
 function list(name: string): string[] {
   return (process.env[name] ?? "")
     .split(",")
@@ -35,11 +40,16 @@ export const config = {
   tracksDir: path.join(acRoot, "content", "tracks"),
   serverCfg: path.join(acRoot, "cfg", "server_cfg.ini"),
   entryList: path.join(acRoot, "cfg", "entry_list.ini"),
-  backupsDir: path.join(acRoot, "panel-backups"),
+  backupsDir: dirFromEnv("BACKUPS_DIR", path.join(acRoot, "panel-backups")),
   trackParams: path.join(acRoot, "cfg", "data_track_params.ini"),
   pitboxOverrides: path.join(acRoot, "panel-data", "pitboxes.json"),
   extraCfg: path.join(acRoot, "cfg", "extra_cfg.yml"),
   cfgDir: path.join(acRoot, "cfg"),
   pluginsDir: path.join(acRoot, "plugins"),
   extraCfgSchema: path.join(acRoot, "cfg", "schemas", "extra_cfg.schema.json"),
+  uploadsDir: dirFromEnv("UPLOADS_DIR", path.join(acRoot, "panel-data", "uploads")),
+  maxUploadMb: int("MAX_UPLOAD_MB", 8192),
+  maxExtractMb: int("MAX_EXTRACT_MB", 30720),
+  sevenZip: process.env.SEVEN_ZIP || "7z",
+  lanUrl: (process.env.LAN_URL ?? "").replace(/\/+$/, ""),
 };

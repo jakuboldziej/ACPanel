@@ -57,3 +57,21 @@ export async function writeAtomic(p: string, content: string): Promise<void> {
   await fs.writeFile(tmp, content);
   await fs.rename(tmp, p);
 }
+
+export async function moveDir(src: string, dst: string): Promise<void> {
+  try {
+    await fs.rename(src, dst);
+    return;
+  } catch (e) {
+    if ((e as NodeJS.ErrnoException).code !== "EXDEV") throw e;
+  }
+  const partial = `${dst}.partial-${process.pid}-${Date.now()}`;
+  try {
+    await fs.cp(src, partial, { recursive: true, errorOnExist: true, force: false, preserveTimestamps: true });
+    await fs.rename(partial, dst);
+  } catch (e) {
+    await fs.rm(partial, { recursive: true, force: true }).catch(() => {});
+    throw e;
+  }
+  await fs.rm(src, { recursive: true, force: true });
+}
