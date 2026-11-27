@@ -9,6 +9,8 @@ import { CarsSummary } from "./components/CarsSummary";
 import { CarsToolbar } from "./components/CarsToolbar";
 import { useCarFilters } from "./hooks/useCarFilters";
 import "./cars.css";
+import { ContentActions } from "@/features/sharing/ContentActions";
+import { useSharing } from "@/features/sharing/useSharing";
 
 const enabledIds = (cars: CarInfo[]) => new Set(cars.filter((c) => c.enabled).map((c) => c.id));
 
@@ -23,6 +25,7 @@ export function CarsPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const filters = useCarFilters(state?.cars ?? [], selected);
+  const sharing = useSharing();
 
   const load = useCallback(async () => {
     try {
@@ -158,6 +161,7 @@ export function CarsPage() {
         {filters.visible.map((car) => (
           <CarRow
             key={car.id}
+            actions={<ContentActions kind="cars" id={car.id} name={car.name} sharing={sharing} />}
             car={car}
             selected={selected.has(car.id)}
             slots={slotsByCar.get(car.id)}

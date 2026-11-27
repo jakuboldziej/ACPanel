@@ -8,6 +8,7 @@ import { presetsRouter } from "./presets/routes.js";
 import { rulesRouter } from "./rules/routes.js";
 import { serverRouter } from "./server/routes.js";
 import { sessionsRouter } from "./sessions/routes.js";
+import { sharingRouter } from "./sharing/routes.js";
 import { tracksRouter } from "./tracks/routes.js";
 
 export interface AdminModule {
@@ -26,4 +27,5 @@ export const adminModules: AdminModule[] = [
   { path: "/extra-config", router: extraConfigRouter },
   { path: "/mods", router: modsRouter },
   { path: "/server", router: serverRouter },
+  { path: "/sharing", router: sharingRouter },
 ];

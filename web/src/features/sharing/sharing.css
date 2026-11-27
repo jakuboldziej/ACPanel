@@ -1,0 +1,10 @@
+@layer components {
+.content-actions { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
+.content-actions [data-slot="button"] { margin-left: 0; color: var(--muted-foreground); }
+.content-actions [data-slot="button"]:hover { color: var(--foreground); }
+.content-actions .shared { color: var(--foreground); }
+.track-actions { display: inline-flex; align-items: center; gap: 2px; }
+@media (max-width: 720px) {
+  .content-actions .label-text { display: none; }
+}
+}

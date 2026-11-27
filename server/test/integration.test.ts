@@ -63,6 +63,30 @@ describe("presets", () => {
   });
 });
 
+describe("content sharing", () => {
+  it("packs a shared car, writes cm_content and cleans up when unshared", async () => {
+    const sharing = await import("../src/modules/sharing/service.js");
+    await sharing.setShared("cars", "abarth500", true);
+    let state = await sharing.sharingState();
+    for (let i = 0; i < 50 && state.items[0]?.status !== "ready"; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      state = await sharing.sharingState();
+    }
+    expect(state.items[0]).toMatchObject({ kind: "cars", id: "abarth500", status: "ready" });
+    const cm = JSON.parse(fs.readFileSync(path.join(acRoot, "cfg", "cm_content", "content.json"), "utf8"));
+    expect(cm.cars.abarth500).toMatchObject({ direct: true, version: state.items[0]!.version });
+    expect(cm.cars.abarth500.url).toMatch(/^https:\/\/panel\.example\/api\/public\/content\/cars\/abarth500\.zip\?v=/);
+    const zip = await sharing.publicDownload("cars", "abarth500");
+    expect(fs.statSync(zip).size).toBeGreaterThan(0);
+    await expect(sharing.publicDownload("cars", "bmw_m3_e30")).rejects.toThrow(/Not available/);
+
+    await sharing.setShared("cars", "abarth500", false);
+    expect(fs.existsSync(path.join(acRoot, "cfg", "cm_content", "content.json"))).toBe(false);
+    expect(fs.existsSync(zip)).toBe(false);
+    await expect(sharing.setShared("cars", "no_such_car", true)).rejects.toThrow(/No such car/);
+  });
+});
+
 describe.skipIf(!hasCommand("7z"))("mod upload", () => {
   it("uploads, detects and installs a car with stripping", async () => {
     const src = tmpDir();

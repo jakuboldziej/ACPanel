@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Thumb } from "@/components/Thumb";
 import { formatBytes } from "@/lib/format";
 import type { CarInfo } from "../api";
+import type { ReactNode } from "react";
 
 interface Props {
   car: CarInfo;
@@ -10,6 +11,7 @@ interface Props {
   deleteDisabledReason: string | null;
   onToggle: () => void;
   onDelete: () => void;
+  actions?: ReactNode;
 }
 
 function details(car: CarInfo): string {
@@ -17,7 +19,7 @@ function details(car: CarInfo): string {
   return [car.brand, car.carClass, car.specs?.bhp, car.specs?.weight, formatBytes(car.sizeBytes)].filter(Boolean).join(" · ");
 }
 
-export function CarRow({ car, selected, slots, deleteDisabledReason, onToggle, onDelete }: Props) {
+export function CarRow({ car, selected, slots, deleteDisabledReason, onToggle, onDelete, actions }: Props) {
   const changed = selected !== car.enabled;
   const cls = [selected && "on", changed && "changed", car.empty && "empty"].filter(Boolean).join(" ");
 
@@ -42,6 +44,7 @@ export function CarRow({ car, selected, slots, deleteDisabledReason, onToggle, o
         )}
         {selected && slots !== undefined && <span className="tag slots">{slots} slots</span>}
       </label>
+      {!car.empty && actions}
       {!car.enabled && (
         <Button
           variant="ghost"

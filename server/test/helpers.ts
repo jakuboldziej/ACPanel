@@ -31,6 +31,8 @@ export async function withAcRoot(acRoot: string): Promise<void> {
   process.env.UPLOADS_DIR = "";
   process.env.BACKUPS_DIR = "";
   process.env.PRESETS_DIR = "";
+  process.env.CONTENT_CACHE_DIR = "";
+  process.env.PUBLIC_URL = "https://panel.example";
 }
 
 export function hasCommand(cmd: string): boolean {

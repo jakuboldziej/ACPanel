@@ -9,8 +9,11 @@ import type { Selection } from "./types";
 import { label } from "./format";
 import { TrackCard } from "./components/TrackCard";
 import "./tracks.css";
+import { ContentActions } from "@/features/sharing/ContentActions";
+import { useSharing } from "@/features/sharing/useSharing";
 
 export function TracksPage() {
+  const sharing = useSharing();
   const server = useServer();
   const confirm = useConfirm();
   const [state, setState] = useState<TracksState | null>(null);
@@ -188,6 +191,7 @@ export function TracksPage() {
             onSelect={(layout) => setSelected({ track: t.id, layout })}
             onPitboxesSaved={load}
             onDelete={() => void removeTrack(t)}
+            actions={<ContentActions kind="tracks" id={t.id} name={t.name} sharing={sharing} />}
           />
         ))}
         {visible.length === 0 && <li className="muted">No tracks</li>}

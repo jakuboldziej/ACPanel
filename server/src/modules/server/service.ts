@@ -122,7 +122,8 @@ async function configChangedAt(root: string): Promise<Date | null> {
       .filter((f) => f.endsWith(".ini") || f.endsWith(".yml"))
       .map((f) => fs.stat(path.join(root, "cfg", f)).then((s) => s.mtime, () => null)),
   );
-  const valid = times.filter((t): t is Date => t !== null);
+  const cmContent = await fs.stat(path.join(root, "cfg", "cm_content", "content.json")).then((s) => s.mtime, () => null);
+  const valid = [...times, cmContent].filter((t): t is Date => t !== null);
   return valid.length ? new Date(Math.max(...valid.map((t) => t.getTime()))) : null;
 }
 

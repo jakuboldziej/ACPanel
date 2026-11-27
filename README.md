@@ -63,6 +63,15 @@ Upload a single mod archive (`.zip`, `.rar`, `.7z`) or a pack of archives, e.g. 
 Archives inside the upload are unpacked up to two levels deep, except archives inside a car or track folder
 (CSP `extension/*.zip` files stay untouched). All unpacked data counts toward `MAX_EXTRACT_MB`.
 
+### Downloads and Content Manager sharing
+
+Every car and track has a **Download** button in the admin panel (a zip built on the fly, zip64 for large mods).
+**Share** offers a car or track to players: the panel packs it once into `CONTENT_CACHE_DIR`
+(default `<AC_ROOT>/panel-data/content-cache`, put it next to `content` on large disks) and writes
+`cfg/cm_content/content.json` with `url` + `version` + `direct: true` entries, so Content Manager downloads
+missing content when players join. Requires `PUBLIC_URL` (for example `https://acpanel.example.com`) and a server
+restart to apply. Shared files are public, so only share mods whose license allows redistribution.
+
 ### RCON (Players tab)
 
 Kick, ban, chat announcements, restarts with a countdown and live session controls use AssettoServer's RCON.

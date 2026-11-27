@@ -2,6 +2,7 @@ import { Router } from "express";
 import { z } from "zod";
 import { withLock } from "../../core/lock.js";
 import { applyPreset, deletePreset, listPresets, savePreset } from "./service.js";
+import { syncCmContent } from "../sharing/service.js";
 
 export const presetsRouter = Router();
 
@@ -17,7 +18,9 @@ presetsRouter.post("/", async (req, res) => {
 });
 
 presetsRouter.post("/:name/apply", async (req, res) => {
-  res.json(await withLock(() => applyPreset(req.params.name)));
+  const result = await withLock(() => applyPreset(req.params.name));
+  await syncCmContent();
+  res.json(result);
 });
 
 presetsRouter.delete("/:name", async (req, res) => {

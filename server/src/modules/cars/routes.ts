@@ -5,6 +5,8 @@ import { applyCars, carDir, deleteCar, getCarsState, planCars } from "./service.
 import { HttpError } from "../../core/fsutil.js";
 import { findCarImage, sendImageInside } from "../../core/preview.js";
 import { withLock } from "../../core/lock.js";
+import { streamFolderZip } from "../../core/zip.js";
+import { forgetShared } from "../sharing/service.js";
 
 const body = z.object({
   enabled: z.array(z.string().min(1).max(100)).max(500),
@@ -34,5 +36,11 @@ carsRouter.get("/:id/image", async (req, res) => {
 });
 
 carsRouter.delete("/:id", async (req, res) => {
-  res.json(await withLock(() => deleteCar(req.params.id)));
+  const result = await withLock(() => deleteCar(req.params.id));
+  await forgetShared("cars", req.params.id);
+  res.json(result);
+});
+
+carsRouter.get("/:id/download", async (req, res) => {
+  streamFolderZip(res, await carDir(req.params.id), req.params.id);
 });

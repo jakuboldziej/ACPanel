@@ -5,6 +5,8 @@ import { config } from "../../config.js";
 import { assertSafeName } from "../../core/fsutil.js";
 import { sendImageInside, trackImagePath } from "../../core/preview.js";
 import { applyTrack, deleteTrack, getTracksState, planTrack, setPitboxOverride, trackDir } from "./service.js";
+import { streamFolderZip } from "../../core/zip.js";
+import { forgetShared, syncCmContent } from "../sharing/service.js";
 
 const selection = z.object({
   track: z.string().min(1).max(200),
@@ -31,7 +33,9 @@ tracksRouter.post("/preview", async (req, res) => {
 
 tracksRouter.post("/apply", async (req, res) => {
   const { track, layout, maxSlotsPerCar } = selection.parse(req.body);
-  res.json(await withLock(() => applyTrack(track, layout, maxSlotsPerCar)));
+  const result = await withLock(() => applyTrack(track, layout, maxSlotsPerCar));
+  await syncCmContent();
+  res.json(result);
 });
 
 tracksRouter.put("/pitboxes", async (req, res) => {
@@ -49,5 +53,11 @@ tracksRouter.get("/:id/image", async (req, res) => {
 });
 
 tracksRouter.delete("/:id", async (req, res) => {
-  res.json(await withLock(() => deleteTrack(req.params.id)));
+  const result = await withLock(() => deleteTrack(req.params.id));
+  await forgetShared("tracks", req.params.id);
+  res.json(result);
+});
+
+tracksRouter.get("/:id/download", async (req, res) => {
+  streamFolderZip(res, await trackDir(req.params.id), req.params.id);
 });

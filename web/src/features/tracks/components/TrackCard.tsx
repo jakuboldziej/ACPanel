@@ -4,6 +4,7 @@ import { Thumb } from "@/components/Thumb";
 import type { TrackInfo } from "../api";
 import type { Selection } from "../types";
 import { LayoutRow } from "./LayoutRow";
+import type { ReactNode } from "react";
 
 export function TrackCard(props: {
   track: TrackInfo;
@@ -12,6 +13,7 @@ export function TrackCard(props: {
   onSelect: (layout: string) => void;
   onPitboxesSaved: () => Promise<void>;
   onDelete: () => void;
+  actions?: ReactNode;
 }) {
   const { track } = props;
   const isCurrentTrack = props.current.track === track.id;
@@ -41,11 +43,14 @@ export function TrackCard(props: {
             ? "empty folder"
             : [track.city, track.country, formatBytes(track.sizeBytes)].filter(Boolean).join(" · ")}
         </span>
-        {!isCurrentTrack && (
-          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={props.onDelete}>
-            Delete
-          </Button>
-        )}
+        <span className="track-actions">
+          {!track.empty && props.actions}
+          {!isCurrentTrack && (
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={props.onDelete}>
+              Delete
+            </Button>
+          )}
+        </span>
       </div>
       {track.layouts.length > 0 && (
         <ul className="layouts">

@@ -13,6 +13,7 @@ import {
   writeChunk,
 } from "./service.js";
 import { sendImageInside } from "../../core/preview.js";
+import { refreshIfShared } from "../sharing/service.js";
 
 export const modsRouter = Router();
 
@@ -50,7 +51,9 @@ modsRouter.post("/uploads/:id/install", async (req, res) => {
       slim: z.boolean(),
     })
     .parse(req.body);
-  res.json(await withLock(() => installUpload(req.params.id, items, slim)));
+  const result = await withLock(() => installUpload(req.params.id, items, slim));
+  for (const item of result.installed) await refreshIfShared(item.kind === "car" ? "cars" : "tracks", item.id);
+  res.json(result);
 });
 
 modsRouter.delete("/uploads/:id", async (req, res) => {
