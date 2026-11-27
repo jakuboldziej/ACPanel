@@ -20,7 +20,7 @@ export function AdminLayout({ onLogout }: { onLogout: () => void }) {
     <ServerProvider>
       <div className="app">
         <header className="topbar">
-          <h1>AC Panel</h1>
+          <a href="/"><h1>AC Panel</h1></a>
           <AdminNav active={tab} />
           <StatusBar />
           <Button variant="outline" size="sm" className="logout" onClick={() => void logout()}>

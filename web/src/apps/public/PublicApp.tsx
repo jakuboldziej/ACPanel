@@ -119,10 +119,6 @@ export function PublicApp() {
           )}
         </section>
       )}
-
-      <footer className="pub-footer muted">
-        <a href="/admin/">Admin</a>
-      </footer>
     </div>
   );
 }

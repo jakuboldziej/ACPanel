@@ -1,11 +1,11 @@
+import "@/styles/index.css";
+import "@/styles/base.css";
+import "@/apps/public/public.css";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { PublicApp } from "@/apps/public/PublicApp";
 import { isTabId } from "@/apps/admin/tabIds";
 import { initTheme } from "@/lib/theme";
-import "@/styles/index.css";
-import "@/styles/base.css";
-import "@/apps/public/public.css";
 
 
 function redirectLegacyAdminLink(): boolean {
