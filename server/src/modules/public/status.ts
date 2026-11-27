@@ -4,6 +4,7 @@ import { config } from "../../config.js";
 import { getServerKey } from "../../core/serverCfg.js";
 import { fetchServerDetails, serverRoot } from "../server/service.js";
 import { trackFolder } from "../tracks/service.js";
+import { carDisplayName } from "../../core/carNames.js";
 import { readUiJson, trackMeta } from "../../core/uiMeta.js";
 
 export type SessionType = "booking" | "practice" | "qualify" | "race";
@@ -37,20 +38,6 @@ function num(v: unknown): number | null {
   return Number.isFinite(n) ? n : null;
 }
 
-async function carName(model: string, names: Map<string, string>): Promise<string> {
-  const cached = names.get(model);
-  if (cached) return cached;
-  let name = model;
-  for (const dir of [config.carsDir, config.carsOffDir]) {
-    const ui = await readUiJson(path.join(dir, model, "ui", "ui_car.json"));
-    if (typeof ui?.name === "string" && ui.name.trim()) {
-      name = ui.name.trim();
-      break;
-    }
-  }
-  names.set(model, name);
-  return name;
-}
 
 async function currentTrack(root: string): Promise<PublicStatus["track"]> {
   const ini = await fs.readFile(path.join(root, "cfg", "server_cfg.ini"), "utf8").catch(() => null);
@@ -83,13 +70,12 @@ async function build(): Promise<PublicStatus> {
   const [details, track] = await Promise.all([fetchServerDetails(), currentTrack(root)]);
   if (!details) return offline(track);
 
-  const names = new Map<string, string>();
   const cars = ((details.players as { Cars?: unknown[] } | undefined)?.Cars ?? []) as Record<string, unknown>[];
   const list: PublicPlayer[] = [];
   for (const c of cars) {
     if (c.IsConnected !== true) continue;
     const model = String(c.Model ?? "");
-    list.push({ name: String(c.DriverName ?? "Driver"), car: model, carName: await carName(model, names) });
+    list.push({ name: String(c.DriverName ?? "Driver"), car: model, carName: await carDisplayName(model) });
   }
 
   const sessionType = SESSION_TYPES[num(details.session) ?? -1];

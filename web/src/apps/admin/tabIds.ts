@@ -1,4 +1,4 @@
-export const TAB_IDS = ["cars", "tracks", "sessions", "rules", "presets", "plugins", "settings", "mods", "logs"] as const;
+export const TAB_IDS = ["players", "cars", "tracks", "sessions", "rules", "presets", "plugins", "settings", "mods", "logs"] as const;
 
 export type TabId = (typeof TAB_IDS)[number];
 

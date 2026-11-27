@@ -1,6 +1,6 @@
-import { formatBytes } from "@/lib/format";
-import { Button } from "@/components/ui/button";
 import { useServer } from "./ServerContext";
+import { DiskBadge } from "./components/DiskBadge";
+import { RestartControl } from "./components/RestartControl";
 import "./status.css";
 
 function trackLabel(track: string): string {
@@ -17,7 +17,7 @@ function since(iso: string | null): string {
 }
 
 export function StatusBar() {
-  const { status, restarting, restart } = useServer();
+  const { status, restarting } = useServer();
   if (!status) return <div className="status muted">…</div>;
 
   if (!status.managed) {
@@ -32,40 +32,22 @@ export function StatusBar() {
 
   const online = status.active && status.live;
   const dotClass = restarting ? "busy" : online ? "on" : status.active ? "busy" : "off";
+  let label: string;
+  if (restarting) label = "Restarting…";
+  else if (online) label = `${status.live!.clients}/${status.live!.maxClients} players · ${trackLabel(status.live!.track)}`;
+  else if (status.active) {
+    const longRunning = status.since && Date.now() - new Date(status.since).getTime() > 60000;
+    label = longRunning ? "Running · no response from /INFO" : "Starting…";
+  } else label = `Offline (${status.state})`;
 
   return (
     <div className="status">
       <span className={`dot ${dotClass}`} />
-      <span>
-        {restarting
-          ? "Restarting…"
-          : online
-            ? `${status.live!.clients}/${status.live!.maxClients} players · ${trackLabel(status.live!.track)}`
-            : status.active
-              ? status.since && Date.now() - new Date(status.since).getTime() > 60000
-                ? "Running · no response from /INFO"
-                : "Starting…"
-              : `Offline (${status.state})`}
-      </span>
+      <span>{label}</span>
       {status.active && !restarting && <span className="muted">up {since(status.since)}</span>}
       <DiskBadge />
-      {status.restartRequired && !restarting && <span className="tag warn">Restart required</span>}
-      <Button variant={status.restartRequired ? "default" : "outline"} disabled={restarting} onClick={() => void restart()}>
-        {restarting ? "Restarting…" : "Restart"}
-      </Button>
+      <RestartControl />
     </div>
-  );
-}
-
-function DiskBadge() {
-  const { status } = useServer();
-  const disk = status?.disk;
-  if (!disk) return null;
-  const low = disk.freeBytes / disk.totalBytes < 0.1;
-  return (
-    <span className={low ? "tag warn" : "muted"} title={`Content disk: ${disk.path}`}>
-      {formatBytes(disk.freeBytes)} free
-    </span>
   );
 }
 

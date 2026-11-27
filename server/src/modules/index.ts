@@ -2,6 +2,7 @@ import type { Router } from "express";
 import { carsRouter } from "./cars/routes.js";
 import { extraConfigRouter } from "./extraConfig/routes.js";
 import { modsRouter } from "./mods/routes.js";
+import { playersRouter } from "./players/routes.js";
 import { pluginsRouter } from "./plugins/routes.js";
 import { presetsRouter } from "./presets/routes.js";
 import { rulesRouter } from "./rules/routes.js";
@@ -15,6 +16,7 @@ export interface AdminModule {
 }
 
 export const adminModules: AdminModule[] = [
+  { path: "/players", router: playersRouter },
   { path: "/cars", router: carsRouter },
   { path: "/tracks", router: tracksRouter },
   { path: "/sessions", router: sessionsRouter },

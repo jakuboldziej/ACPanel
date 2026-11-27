@@ -43,6 +43,8 @@ export const config = {
   backupsDir: dirFromEnv("BACKUPS_DIR", path.join(acRoot, "panel-backups")),
   trackParams: path.join(acRoot, "cfg", "data_track_params.ini"),
   pitboxOverrides: path.join(acRoot, "panel-data", "pitboxes.json"),
+  bansMeta: path.join(acRoot, "panel-data", "bans.json"),
+  rconDefaultPort: int("RCON_PORT", 27015),
   extraCfg: path.join(acRoot, "cfg", "extra_cfg.yml"),
   cfgDir: path.join(acRoot, "cfg"),
   pluginsDir: path.join(acRoot, "plugins"),

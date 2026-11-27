@@ -4,4 +4,8 @@
   .topbar .status { order: 3; width: 100%; margin-left: 0; gap: 6px 10px; font-size: 13px; }
   .topbar .status [data-slot="button"] { margin-left: auto; }
 }
+.restart-options { display: flex; flex-direction: column; gap: 6px; }
+.restart-option { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--border); border-radius: var(--radius-md, 8px); cursor: pointer; font-size: 14px; }
+.restart-option.selected { border-color: var(--ring); background: var(--muted); }
+.restart-option input { accent-color: var(--primary); }
 }

@@ -2,16 +2,28 @@ import { spawn } from "node:child_process";
 import { Router } from "express";
 import { z } from "zod";
 import { withLock } from "../../core/lock.js";
+import { cancelRestart, pendingRestart, scheduleRestart } from "./restartSchedule.js";
 import { getStatus, logUnit, readLogs, restartService } from "./service.js";
 
 export const serverRouter = Router();
 
 serverRouter.get("/status", async (_req, res) => {
-  res.json(await getStatus());
+  res.json({ ...(await getStatus()), pendingRestart: pendingRestart() });
 });
 
-serverRouter.post("/restart", async (_req, res) => {
-  res.json(await withLock(() => restartService()));
+serverRouter.post("/restart", async (req, res) => {
+  const { warnSeconds } = z.object({ warnSeconds: z.number().int().min(0).max(900).default(0) }).parse(req.body ?? {});
+  if (warnSeconds === 0) {
+    res.json({ ...(await withLock(() => restartService())), pendingRestart: null });
+    return;
+  }
+  const pending = await scheduleRestart(warnSeconds);
+  res.json({ ...(await getStatus()), pendingRestart: pending, ready: false });
+});
+
+serverRouter.post("/restart/cancel", async (_req, res) => {
+  await cancelRestart();
+  res.json({ ...(await getStatus()), pendingRestart: null });
 });
 
 serverRouter.get("/logs", async (req, res) => {

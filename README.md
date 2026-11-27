@@ -57,6 +57,13 @@ Optional: `HOST=127.0.0.1` (only reachable through a reverse proxy or tunnel), `
 When production uses port 8090, run development on another port: `PORT=8095` in the development `.env`
 (the Vite proxy follows it).
 
+### RCON (Players tab)
+
+Kick, ban, chat announcements, restarts with a countdown and live session controls use AssettoServer's RCON.
+Enable it on the Players page (sets `RconPort` in `extra_cfg.yml`, default `RCON_PORT=27015`, then restart the server).
+The panel connects to `127.0.0.1` and authenticates with `ADMIN_PASSWORD` from `server_cfg.ini`.
+AssettoServer listens on all interfaces, so do not forward the RCON port on your router.
+
 ### URLs
 
 | Path | What |

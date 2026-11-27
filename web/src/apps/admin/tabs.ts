@@ -7,6 +7,7 @@ interface TabDefinition {
 }
 
 const definitions: Record<TabId, TabDefinition> = {
+  players: { label: "Players", load: () => import("@/features/players/PlayersPage").then((m) => ({ default: m.PlayersPage })) },
   cars: { label: "Cars", load: () => import("@/features/cars/CarsPage").then((m) => ({ default: m.CarsPage })) },
   tracks: { label: "Tracks", load: () => import("@/features/tracks/TracksPage").then((m) => ({ default: m.TracksPage })) },
   sessions: { label: "Sessions", load: () => import("@/features/sessions/SessionsPage").then((m) => ({ default: m.SessionsPage })) },

@@ -1,6 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { toast } from "sonner";
-import { useConfirm } from "@/components/confirm";
 import { serverApi, type ServiceStatus } from "./api";
 
 interface ServerContextValue {
@@ -8,7 +7,8 @@ interface ServerContextValue {
   error: string | null;
   restarting: boolean;
   refresh: () => Promise<void>;
-  restart: () => Promise<void>;
+  restart: (warnSeconds: number) => Promise<void>;
+  cancelRestart: () => Promise<void>;
 }
 
 const ServerContext = createContext<ServerContextValue | null>(null);
@@ -20,7 +20,6 @@ export function useServer(): ServerContextValue {
 }
 
 export function ServerProvider({ children }: { children: ReactNode }) {
-  const confirm = useConfirm();
   const [status, setStatus] = useState<ServiceStatus | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [restarting, setRestarting] = useState(false);
@@ -41,23 +40,21 @@ export function ServerProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(id);
   }, [refresh]);
 
-  const restart = useCallback(async () => {
-    const players = status?.live?.clients ?? 0;
-    const ok = await confirm({
-      title: "Restart the server?",
-      description:
-        players > 0
-          ? `${players} player${players === 1 ? " is" : "s are"} online and will be disconnected.`
-          : "Nobody is online right now.",
-      confirmText: "Restart",
-      destructive: players > 0,
-    });
-    if (!ok) return;
-
-    setRestarting(true);
+  const restart = useCallback(async (warnSeconds: number) => {
     setError(null);
+    if (warnSeconds > 0) {
+      try {
+        const res = await serverApi.restart(warnSeconds);
+        setStatus(res);
+        toast.success("Restart scheduled, players are being warned in the chat");
+      } catch (e) {
+        toast.error((e as Error).message);
+      }
+      return;
+    }
+    setRestarting(true);
     try {
-      const res = await serverApi.restart();
+      const res = await serverApi.restart(0);
       setStatus(res);
       if (res.ready) toast.success("Server restarted");
       else setError(`Server did not come back up (${res.state}). Check the logs.`);
@@ -66,9 +63,20 @@ export function ServerProvider({ children }: { children: ReactNode }) {
     } finally {
       setRestarting(false);
     }
-  }, [status, confirm]);
+  }, []);
+
+  const cancelRestart = useCallback(async () => {
+    try {
+      setStatus(await serverApi.cancelRestart());
+      toast.success("Restart cancelled");
+    } catch (e) {
+      toast.error((e as Error).message);
+    }
+  }, []);
 
   return (
-    <ServerContext.Provider value={{ status, error, restarting, refresh, restart }}>{children}</ServerContext.Provider>
+    <ServerContext.Provider value={{ status, error, restarting, refresh, restart, cancelRestart }}>
+      {children}
+    </ServerContext.Provider>
   );
 }
