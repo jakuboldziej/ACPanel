@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { sessionsApi, type SessionsConfig, type TimedSession, type Weather } from "./api";
 import { useServer } from "./ServerContext";
 
@@ -125,7 +127,7 @@ export function SessionsPage() {
       const res = await sessionsApi.save(s!);
       setSaved(res.sessions);
       setS(res.sessions);
-      setMessage({ kind: "ok", text: `Saved. Backup: ${res.backup}. Restart the server to apply (button at the top).` });
+      toast.success(`Saved. Backup: ${res.backup}. Restart the server to apply (button at the top).`);
       void server.refresh();
     } catch (e) {
       setMessage({ kind: "err", text: (e as Error).message });
@@ -160,12 +162,12 @@ export function SessionsPage() {
       <div className="toolbar">
         <span className="muted">Sessions, time and weather from server_cfg.ini</span>
         <span className="spacer" />
-        <button disabled={!dirty || busy} onClick={() => setS(saved)}>
+        <Button variant="outline" disabled={!dirty || busy} onClick={() => setS(saved)}>
           Revert
-        </button>
-        <button className="primary" disabled={!dirty || busy} onClick={() => void save()}>
+        </Button>
+        <Button disabled={!dirty || busy} onClick={() => void save()}>
           {busy ? "Saving…" : "Save"}
-        </button>
+        </Button>
       </div>
 
       {message && <div className={`msg ${message.kind}`}>{message.text}</div>}
@@ -259,16 +261,16 @@ export function SessionsPage() {
         </div>
         <div className="grip-presets">
           {GRIP_PRESETS.map((p) => (
-            <button key={p.name} onClick={() => patch({ dynamicTrack: p.v })}>
+            <Button variant="outline" key={p.name} onClick={() => patch({ dynamicTrack: p.v })}>
               {p.name}
-            </button>
+            </Button>
           ))}
         </div>
       </Card>
 
       <Card
         title="Weather"
-        aside={<button onClick={() => patch({ weathers: [...s.weathers, { ...NEW_WEATHER }] })}>Add weather</button>}
+        aside={<Button variant="outline" onClick={() => patch({ weathers: [...s.weathers, { ...NEW_WEATHER }] })}>Add weather</Button>}
       >
         <datalist id="weather-types">
           {WEATHER_TYPES.map((w) => (
@@ -290,14 +292,13 @@ export function SessionsPage() {
             <NumberField label="Wind max" suffix="km/h" min={0} max={200} value={w.windMax} onChange={(v) => patchWeather(i, { windMax: v })} />
             <NumberField label="Wind dir" suffix="°" min={0} max={359} value={w.windDirection} onChange={(v) => patchWeather(i, { windDirection: v })} />
             <NumberField label="Dir ±" suffix="°" min={0} max={180} value={w.windDirectionVariation} onChange={(v) => patchWeather(i, { windDirectionVariation: v })} />
-            <button
-              className="icon-btn danger"
+            <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive"
               disabled={s.weathers.length <= 1}
               title={s.weathers.length <= 1 ? "At least one weather is required" : "Remove"}
               onClick={() => patch({ weathers: s.weathers.filter((_, k) => k !== i) })}
             >
               Remove
-            </button>
+            </Button>
           </div>
         ))}
         <p className="field-desc muted">

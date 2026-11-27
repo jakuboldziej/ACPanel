@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { pluginsApi, type PluginConfig, type PluginInfo } from "./api";
 import { useServer } from "./ServerContext";
 import { YamlEditor } from "./YamlEditor";
@@ -68,7 +70,7 @@ export function PluginsPage() {
     try {
       const enabled = plugins.filter((p) => selected.has(p.name) && p.installed).map((p) => p.name);
       const res = await pluginsApi.setEnabled(enabled);
-      setMessage({ kind: "ok", text: `Saved. Backup: ${res.backup}. Restart the server to apply (button at the top).` });
+      toast.success(`Saved. Backup: ${res.backup}. Restart the server to apply (button at the top).`);
       await load();
       void server.refresh();
     } catch (e) {
@@ -92,13 +94,13 @@ export function PluginsPage() {
           <div className="value">{selected.size}</div>
         </div>
         {dirty && (
-          <button onClick={() => setSelected(new Set(plugins.filter((p) => p.enabled).map((p) => p.name)))}>
+          <Button variant="outline" onClick={() => setSelected(new Set(plugins.filter((p) => p.enabled).map((p) => p.name)))}>
             Undo changes
-          </button>
+          </Button>
         )}
-        <button className="primary" disabled={!dirty || busy} onClick={() => void save()}>
+        <Button disabled={!dirty || busy} onClick={() => void save()}>
           {busy ? "Saving…" : "Save"}
-        </button>
+        </Button>
       </section>
 
       {message && <div className={`msg ${message.kind}`}>{message.text}</div>}
@@ -120,9 +122,9 @@ export function PluginsPage() {
               </label>
               <p className="plugin-desc muted">{DESCRIPTIONS[p.name] ?? ""}</p>
               {p.installed && (
-                <button onClick={() => setEditing(editing === p.name ? null : p.name)}>
+                <Button variant="outline" onClick={() => setEditing(editing === p.name ? null : p.name)}>
                   {editing === p.name ? "Close" : "Configure"}
-                </button>
+                </Button>
               )}
             </li>
           );
@@ -170,7 +172,7 @@ function PluginConfigEditor(props: { name: string; onClose: () => void; onSaved:
     setMessage(null);
     try {
       await action();
-      setMessage({ kind: "ok", text: ok });
+      toast.success(ok);
       await load();
       props.onSaved();
     } catch (e) {
@@ -192,9 +194,9 @@ function PluginConfigEditor(props: { name: string; onClose: () => void; onSaved:
           <div className="value mono">cfg/{cfg.file}</div>
         </div>
         {cfg.reference && (
-          <button onClick={() => setShowReference((s) => !s)}>{showReference ? "Hide reference" : "Show reference"}</button>
+          <Button variant="outline" onClick={() => setShowReference((s) => !s)}>{showReference ? "Hide reference" : "Show reference"}</Button>
         )}
-        <button onClick={props.onClose}>Close</button>
+        <Button variant="outline" onClick={props.onClose}>Close</Button>
       </div>
 
       {message && <div className={`msg ${message.kind}`}>{message.text}</div>}
@@ -204,12 +206,12 @@ function PluginConfigEditor(props: { name: string; onClose: () => void; onSaved:
           {cfg.reference ? (
             <>
               The config file does not exist yet.{" "}
-              <button
+              <Button variant="outline"
                 disabled={busy}
                 onClick={() => void run(() => pluginsApi.fromReference(props.name), "Created from reference")}
               >
                 Create from reference
-              </button>
+              </Button>
             </>
           ) : (
             "No config and no reference yet. Enable the plugin, save and restart the server: AssettoServer will generate a reference file (if the plugin has a config)."
@@ -222,16 +224,15 @@ function PluginConfigEditor(props: { name: string; onClose: () => void; onSaved:
           <YamlEditor value={text} onChange={setText} />
           <div className="editor-actions">
             <span className="muted">{cfg.hasSchema ? "Validated against the plugin schema on save" : "No schema, only YAML syntax is checked"}</span>
-            <button disabled={!dirty || busy} onClick={() => setText(cfg.yaml)}>
+            <Button variant="outline" disabled={!dirty || busy} onClick={() => setText(cfg.yaml)}>
               Revert
-            </button>
-            <button
-              className="primary"
+            </Button>
+            <Button
               disabled={!dirty || busy}
               onClick={() => void run(() => pluginsApi.saveConfig(props.name, text), "Saved. Restart the server to apply.")}
             >
               {busy ? "Saving…" : "Save"}
-            </button>
+            </Button>
           </div>
         </div>
         {cfg.reference && showReference && (

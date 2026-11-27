@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/confirm";
 import { formatBytes } from "./format";
 import { useServer } from "./ServerContext";
 import { Thumb } from "./Thumb";
@@ -8,6 +11,7 @@ type Filter = "all" | "on" | "off";
 
 export function CarsPage() {
   const server = useServer();
+  const confirm = useConfirm();
   const [state, setState] = useState<CarsState | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [maxSlots, setMaxSlots] = useState(3);
@@ -114,16 +118,13 @@ export function CarsPage() {
     ]
       .filter(Boolean)
       .join("\n");
-    if (!confirm(`Apply changes?\n\n${summary}`)) return;
+    if (!(await confirm({ title: "Apply changes?", description: summary, confirmText: "Apply" }))) return;
 
     setBusy(true);
     setMessage(null);
     try {
       const res = await api.apply([...selected], maxSlots);
-      setMessage({
-        kind: "ok",
-        text: `Saved (${res.totalSlots} slots). Backup: ${res.backup}. Restart the server to apply (button at the top).`,
-      });
+      toast.success(`Saved (${res.totalSlots} slots). Backup: ${res.backup}. Restart the server to apply (button at the top).`);
       await load();
       void server.refresh();
     } catch (e) {
@@ -135,12 +136,20 @@ export function CarsPage() {
 
   async function removeCar(id: string, name: string, size: number, empty: boolean) {
     const what = empty ? `the empty folder "${id}"` : `${name} (${id}), ${formatBytes(size)}`;
-    if (!confirm(`Permanently delete ${what} from disk?\n\nThis cannot be undone.`)) return;
+    if (
+      !(await confirm({
+        title: "Delete from disk?",
+        description: `${what}\n\nThis cannot be undone.`,
+        confirmText: "Delete",
+        destructive: true,
+      }))
+    )
+      return;
     setBusy(true);
     setMessage(null);
     try {
       const res = await api.deleteCar(id);
-      setMessage({ kind: "ok", text: `Deleted ${id}, freed ${formatBytes(res.freedBytes)}.` });
+      toast.success(`Deleted ${id}, freed ${formatBytes(res.freedBytes)}.`);
       await load();
     } catch (e) {
       setMessage({ kind: "err", text: (e as Error).message });
@@ -194,9 +203,9 @@ export function CarsPage() {
             onChange={(e) => setMaxSlots(Math.max(1, Number(e.target.value) || 1))}
           />
         </label>
-        <button className="primary" disabled={!plan || busy || (!dirty && mismatch.length === 0)} onClick={apply}>
+        <Button disabled={!plan || busy || (!dirty && mismatch.length === 0)} onClick={apply}>
           {busy ? "Saving…" : "Apply"}
-        </button>
+        </Button>
       </section>
 
       {message && <div className={`msg ${message.kind}`}>{message.text}</div>}
@@ -217,9 +226,9 @@ export function CarsPage() {
         />
         <div className="seg">
           {(["all", "on", "off"] as const).map((f) => (
-            <button key={f} className={filter === f ? "active" : ""} onClick={() => setFilter(f)}>
+            <Button variant={filter === f ? "default" : "outline"} key={f} onClick={() => setFilter(f)}>
               {f === "all" ? "All" : f === "on" ? "Enabled" : "Disabled"}
-            </button>
+            </Button>
           ))}
         </div>
         {facets.classes.length > 0 && (
@@ -242,16 +251,16 @@ export function CarsPage() {
             ))}
           </select>
         )}
-        <button onClick={() => selectVisible(true)} disabled={visible.length === 0}>
+        <Button variant="outline" onClick={() => selectVisible(true)} disabled={visible.length === 0}>
           Select shown
-        </button>
-        <button onClick={() => selectVisible(false)} disabled={visible.length === 0}>
+        </Button>
+        <Button variant="outline" onClick={() => selectVisible(false)} disabled={visible.length === 0}>
           Unselect shown
-        </button>
+        </Button>
         {dirty && (
-          <button onClick={() => setSelected(new Set(state.cars.filter((c) => c.enabled).map((c) => c.id)))}>
+          <Button variant="outline" onClick={() => setSelected(new Set(state.cars.filter((c) => c.enabled).map((c) => c.id)))}>
             Revert changes
-          </button>
+          </Button>
         )}
       </div>
 
@@ -293,14 +302,13 @@ export function CarsPage() {
                 {on && slotsByCar.has(c.id) && <span className="tag slots">{slotsByCar.get(c.id)} slots</span>}
               </label>
               {!c.enabled && (
-                <button
-                  className="icon-btn danger"
+                <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive"
                   title={dirty ? "Apply or undo your changes first" : c.empty ? "Remove empty folder" : "Delete from disk"}
                   disabled={dirty || busy}
                   onClick={() => void removeCar(c.id, c.name, c.sizeBytes, c.empty)}
                 >
                   Delete
-                </button>
+                </Button>
               )}
             </li>
           );

@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { extraConfigApi, type ExtraConfig, type FieldInfo, type FieldValue } from "./api";
 import { useServer } from "./ServerContext";
 import { YamlEditor } from "./YamlEditor";
@@ -44,7 +46,7 @@ export function SettingsPage() {
     setMessage(null);
     try {
       const res = await action();
-      setMessage({ kind: "ok", text: `Saved. Backup: ${res.backup}. Restart the server to apply (button at the top).` });
+      toast.success(`Saved. Backup: ${res.backup}. Restart the server to apply (button at the top).`);
       await load();
       void server.refresh();
     } catch (e) {
@@ -63,40 +65,37 @@ export function SettingsPage() {
     <div className="settings">
       <div className="toolbar">
         <div className="seg">
-          <button
-            className={mode === "form" ? "active" : ""}
+          <Button variant={mode === "form" ? "default" : "outline"}
             disabled={rawDirty}
             title={rawDirty ? "Save or revert the raw changes first" : ""}
             onClick={() => setMode("form")}
           >
             Form
-          </button>
-          <button
-            className={mode === "raw" ? "active" : ""}
+          </Button>
+          <Button variant={mode === "raw" ? "default" : "outline"}
             disabled={formDirty}
             title={formDirty ? "Save or revert the form changes first" : ""}
             onClick={() => setMode("raw")}
           >
             Raw YAML
-          </button>
+          </Button>
         </div>
         {mode === "form" && (
           <input type="search" placeholder="Search settings…" value={query} onChange={(e) => setQuery(e.target.value)} />
         )}
         <span className="spacer" />
-        <button
+        <Button variant="outline"
           disabled={busy || (mode === "form" ? !formDirty : !rawDirty)}
           onClick={() => (mode === "form" ? setEdits({}) : setRaw(data.yaml))}
         >
           Revert
-        </button>
-        <button
-          className="primary"
+        </Button>
+        <Button
           disabled={busy || (mode === "form" ? !formDirty : !rawDirty)}
           onClick={() => void save(() => (mode === "form" ? extraConfigApi.saveValues(edits) : extraConfigApi.saveRaw(raw)))}
         >
           {busy ? "Saving…" : "Save"}
-        </button>
+        </Button>
       </div>
 
       {message && <div className={`msg ${message.kind}`}>{message.text}</div>}

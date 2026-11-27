@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { serverApi } from "./api";
 import { useServer } from "./ServerContext";
 
@@ -61,10 +62,10 @@ export function LogsPage() {
       <div className="toolbar">
         <input type="search" placeholder="Filter logs…" value={filter} onChange={(e) => setFilter(e.target.value)} />
         <span className={`live ${connected ? "on" : ""}`}>{connected ? "● live" : "○ disconnected"}</span>
-        <button className={follow ? "active" : ""} onClick={() => setFollow((f) => !f)}>
+        <Button variant={follow ? "default" : "outline"} onClick={() => setFollow((f) => !f)}>
           {follow ? "Following" : "Paused"}
-        </button>
-        <button onClick={() => setLines([])}>Clear</button>
+        </Button>
+        <Button variant="outline" onClick={() => setLines([])}>Clear</Button>
       </div>
       {error && <div className="msg err">{error}</div>}
       <pre

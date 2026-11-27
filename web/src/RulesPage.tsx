@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { rulesApi, type Rules } from "./api";
 import { useServer } from "./ServerContext";
 
@@ -43,7 +45,7 @@ export function RulesPage() {
       const res = await rulesApi.save(rules!);
       setSaved(res.rules);
       setRules(res.rules);
-      setMessage({ kind: "ok", text: `Saved. Backup: ${res.backup}. Restart the server to apply (button at the top).` });
+      toast.success(`Saved. Backup: ${res.backup}. Restart the server to apply (button at the top).`);
       void server.refresh();
     } catch (e) {
       setMessage({ kind: "err", text: (e as Error).message });
@@ -57,12 +59,12 @@ export function RulesPage() {
       <div className="toolbar">
         <span className="muted">Penalties and race rules from server_cfg.ini</span>
         <span className="spacer" />
-        <button disabled={!dirty || busy} onClick={() => setRules(saved)}>
+        <Button variant="outline" disabled={!dirty || busy} onClick={() => setRules(saved)}>
           Revert
-        </button>
-        <button className="primary" disabled={!dirty || busy} onClick={() => void save()}>
+        </Button>
+        <Button disabled={!dirty || busy} onClick={() => void save()}>
           {busy ? "Saving…" : "Save"}
-        </button>
+        </Button>
       </div>
 
       {message && <div className={`msg ${message.kind}`}>{message.text}</div>}

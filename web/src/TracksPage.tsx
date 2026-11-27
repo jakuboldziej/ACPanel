@@ -1,4 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/confirm";
 import { formatBytes } from "./format";
 import { useServer } from "./ServerContext";
 import { Thumb } from "./Thumb";
@@ -15,6 +18,7 @@ function label(track: string, layout: string) {
 
 export function TracksPage() {
   const server = useServer();
+  const confirm = useConfirm();
   const [state, setState] = useState<TracksState | null>(null);
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<Selection | null>(null);
@@ -78,16 +82,13 @@ export function TracksPage() {
       `Slots: ${plan.totalSlots} / ${plan.pitboxes} pitboxes`,
       ...plan.warnings.map((w) => `Warning: ${w}`),
     ];
-    if (!confirm(`Change track?\n\n${lines.join("\n")}`)) return;
+    if (!(await confirm({ title: "Change track?", description: lines.join("\n"), confirmText: "Set track" }))) return;
 
     setBusy(true);
     setMessage(null);
     try {
       const res = await tracksApi.apply(selected.track, selected.layout);
-      setMessage({
-        kind: "ok",
-        text: `Saved ${label(res.track, res.layout)} (${res.totalSlots} slots). Backup: ${res.backup}. Restart the server to apply (button at the top).`,
-      });
+      toast.success(`Saved ${label(res.track, res.layout)} (${res.totalSlots} slots). Backup: ${res.backup}. Restart the server to apply (button at the top).`);
       setSelected(null);
       await load();
       void server.refresh();
@@ -100,12 +101,20 @@ export function TracksPage() {
 
   async function removeTrack(t: TrackInfo) {
     const what = t.empty ? `the empty folder "${t.id}"` : `${t.name} (${t.id}), ${formatBytes(t.sizeBytes)}`;
-    if (!confirm(`Permanently delete ${what} from disk?\n\nThis cannot be undone.`)) return;
+    if (
+      !(await confirm({
+        title: "Delete from disk?",
+        description: `${what}\n\nThis cannot be undone.`,
+        confirmText: "Delete",
+        destructive: true,
+      }))
+    )
+      return;
     setBusy(true);
     setMessage(null);
     try {
       const res = await tracksApi.remove(t.id);
-      setMessage({ kind: "ok", text: `Deleted ${t.id}, freed ${formatBytes(res.freedBytes)}.` });
+      toast.success(`Deleted ${t.id}, freed ${formatBytes(res.freedBytes)}.`);
       if (selected?.track === t.id) setSelected(null);
       await load();
     } catch (e) {
@@ -157,10 +166,10 @@ export function TracksPage() {
                 </div>
               </div>
             )}
-            <button onClick={() => setSelected(null)}>Cancel</button>
-            <button className="primary" disabled={!plan || busy} onClick={apply}>
+            <Button variant="outline" onClick={() => setSelected(null)}>Cancel</Button>
+            <Button disabled={!plan || busy} onClick={apply}>
               {busy ? "Saving…" : "Set track"}
-            </button>
+            </Button>
           </div>
           {planError && <div className="msg err">{planError}</div>}
           {plan?.warnings.map((w) => (
@@ -230,9 +239,9 @@ function TrackCard(props: {
             : [track.city, track.country, formatBytes(track.sizeBytes)].filter(Boolean).join(" · ")}
         </span>
         {!isCurrentTrack && (
-          <button className="icon-btn danger" onClick={props.onDelete}>
+          <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-destructive" onClick={props.onDelete}>
             Delete
-          </button>
+          </Button>
         )}
       </div>
       {track.layouts.length > 0 && (
@@ -319,15 +328,15 @@ function LayoutRow(props: {
           }}
         >
           <input type="number" min={1} max={200} autoFocus value={value} onChange={(e) => setValue(e.target.value)} />
-          <button type="submit">Save</button>
+          <Button variant="outline" type="submit">Save</Button>
           {layout.pitboxesSource === "manual" && (
-            <button type="button" onClick={() => void save(null)}>
+            <Button variant="outline" type="button" onClick={() => void save(null)}>
               Reset
-            </button>
+            </Button>
           )}
-          <button type="button" onClick={() => setEditing(false)}>
+          <Button variant="outline" type="button" onClick={() => setEditing(false)}>
             ×
-          </button>
+          </Button>
         </form>
       ) : (
         <button

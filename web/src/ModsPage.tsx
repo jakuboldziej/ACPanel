@@ -1,4 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type DragEvent } from "react";
+import { Button } from "@/components/ui/button";
+import { useConfirm } from "@/components/confirm";
 import { Thumb } from "./Thumb";
 import { modsApi, uploadChunk, type InstallResult, type UploadSettings, type UploadView } from "./api";
 import { formatBytes } from "./format";
@@ -240,7 +242,7 @@ function JobCard(props: { job: Job; onDismiss: () => void; onUpdate: (p: Partial
         <span className="name">{job.fileName}</span>
         <span className="muted">{formatBytes(job.size)}</span>
         <span className="job-phase">{phaseLabel}</span>
-        <button onClick={props.onDismiss}>{job.phase === "uploading" ? "Cancel" : job.phase === "done" ? "Close" : "Discard"}</button>
+        <Button variant="outline" onClick={props.onDismiss}>{job.phase === "uploading" ? "Cancel" : job.phase === "done" ? "Close" : "Discard"}</Button>
       </div>
       {(job.phase === "uploading" || status === "extracting") && (
         <div className={`progress ${status === "extracting" ? "indeterminate" : ""}`}>
@@ -258,6 +260,7 @@ function JobCard(props: { job: Job; onDismiss: () => void; onUpdate: (p: Partial
 
 function InstallForm(props: { upload: UploadView; onInstalled: (r: InstallResult[]) => void }) {
   const { upload } = props;
+  const confirm = useConfirm();
   const [picked, setPicked] = useState<Set<string>>(
     () => new Set(upload.items.filter((i) => i.validId && !i.existing).map((i) => i.key)),
   );
@@ -269,7 +272,15 @@ function InstallForm(props: { upload: UploadView; onInstalled: (r: InstallResult
   async function install() {
     const items = upload.items.filter((i) => picked.has(i.key));
     const replacing = items.filter((i) => i.existing);
-    if (replacing.length && !confirm(`Replace ${replacing.map((i) => i.id).join(", ")}?\n\nThe current versions will be moved to panel-backups.`)) {
+    if (
+      replacing.length &&
+      !(await confirm({
+        title: "Replace existing content?",
+        description: `${replacing.map((i) => i.id).join(", ")}\n\nThe current versions will be moved to panel-backups.`,
+        confirmText: "Replace",
+        destructive: true,
+      }))
+    ) {
       return;
     }
     setBusy(true);
@@ -333,9 +344,9 @@ function InstallForm(props: { upload: UploadView; onInstalled: (r: InstallResult
             Strip 3D models, skins and sounds from cars (server-only copy)
           </label>
         )}
-        <button className="primary" disabled={busy || picked.size === 0} onClick={() => void install()}>
+        <Button disabled={busy || picked.size === 0} onClick={() => void install()}>
           {busy ? "Installing…" : `Install ${picked.size}`}
-        </button>
+        </Button>
       </div>
       {error && <div className="msg err">{error}</div>}
     </div>

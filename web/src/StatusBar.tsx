@@ -1,4 +1,5 @@
 import { formatBytes } from "./format";
+import { Button } from "@/components/ui/button";
 import { useServer } from "./ServerContext";
 
 function trackLabel(track: string): string {
@@ -48,9 +49,9 @@ export function StatusBar() {
       {status.active && !restarting && <span className="muted">up {since(status.since)}</span>}
       <DiskBadge />
       {status.restartRequired && !restarting && <span className="tag warn">Restart required</span>}
-      <button className={status.restartRequired ? "primary" : ""} disabled={restarting} onClick={() => void restart()}>
+      <Button variant={status.restartRequired ? "default" : "outline"} disabled={restarting} onClick={() => void restart()}>
         {restarting ? "Restarting…" : "Restart"}
-      </button>
+      </Button>
     </div>
   );
 }

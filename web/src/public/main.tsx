@@ -1,6 +1,8 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { PublicApp } from "./PublicApp";
+import { initTheme } from "../theme";
+import "../index.css";
 import "../styles.css";
 import "./public.css";
 
@@ -14,6 +16,8 @@ function redirectLegacyAdminLink(): boolean {
 }
 
 window.addEventListener("hashchange", redirectLegacyAdminLink);
+
+initTheme();
 
 if (!redirectLegacyAdminLink()) {
   createRoot(document.getElementById("root")!).render(

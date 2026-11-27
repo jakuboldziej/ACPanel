@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { authApi, UNAUTHORIZED_EVENT } from "./api";
 import { CarsPage } from "./CarsPage";
 import { LoginPage } from "./LoginPage";
@@ -83,9 +84,9 @@ function Panel({ onLogout }: { onLogout: () => void }) {
             ))}
           </nav>
           <StatusBar />
-          <button className="logout" onClick={() => void logout()}>
+          <Button variant="outline" size="sm" className="logout" onClick={() => void logout()}>
             Log out
-          </button>
+          </Button>
         </header>
         <ServerError />
         <main>
