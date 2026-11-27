@@ -37,7 +37,7 @@ function isUnsafePath(p: string): boolean {
   return norm.startsWith("/") || /^[A-Za-z]:/.test(norm) || norm.split("/").includes("..");
 }
 
-export async function listArchive(file: string): Promise<ArchiveListing> {
+export async function listArchive(file: string, limitBytes = config.maxExtractMb * 1024 * 1024): Promise<ArchiveListing> {
   const r = await run7z(["l", "-slt", "-ba", "-sccUTF-8", "-pacpanel-no-password", file], 5 * 60_000);
   if (r.code !== 0) {
     const reason = /wrong password|encrypted/i.test(r.stderr + r.stdout)
@@ -68,8 +68,11 @@ export async function listArchive(file: string): Promise<ArchiveListing> {
   }
 
   if (files > 200_000) throw new HttpError(400, "Archive contains too many files");
-  if (unpackedBytes > config.maxExtractMb * 1024 * 1024) {
-    throw new HttpError(400, `Archive unpacks to ${(unpackedBytes / 1024 ** 3).toFixed(1)} GB, limit is ${(config.maxExtractMb / 1024).toFixed(1)} GB`);
+  if (unpackedBytes > limitBytes) {
+    throw new HttpError(
+      400,
+      `Archive unpacks to ${(unpackedBytes / 1024 ** 3).toFixed(1)} GB, only ${(limitBytes / 1024 ** 3).toFixed(1)} GB of the ${(config.maxExtractMb / 1024).toFixed(1)} GB limit is left`,
+    );
   }
   return { files, unpackedBytes };
 }

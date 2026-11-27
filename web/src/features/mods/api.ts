@@ -13,6 +13,8 @@ export interface ModItem {
   validId: boolean;
   image: "preview" | "badge" | null;
   warnings: string[];
+  duplicate?: boolean;
+  source?: string | null;
 }
 
 export interface UploadView {
@@ -23,6 +25,7 @@ export interface UploadView {
   receivedChunks: number;
   status: UploadStatus;
   error: string | null;
+  progress?: string | null;
   items: ModItem[];
   createdAt: number;
 }

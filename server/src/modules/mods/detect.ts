@@ -8,11 +8,11 @@ import { dirSize } from "./archive.js";
 import { extractDir, loadMeta } from "./store.js";
 import type { ExistingState, ItemKind, ModItem } from "./types.js";
 
-async function isCarDir(dir: string): Promise<boolean> {
+export async function isCarDir(dir: string): Promise<boolean> {
   return (await exists(path.join(dir, "data.acd"))) || (await exists(path.join(dir, "data", "car.ini")));
 }
 
-async function isTrackDir(dir: string): Promise<boolean> {
+export async function isTrackDir(dir: string): Promise<boolean> {
   const entries = await fs.readdir(dir, { withFileTypes: true });
   if (entries.some((e) => e.isFile() && /^models.*\.ini$/i.test(e.name))) return true;
   if (await exists(path.join(dir, "data", "surfaces.ini"))) return true;
@@ -97,6 +97,8 @@ export async function detectItems(root: string, archiveName: string): Promise<Mo
         validId,
         image: await itemImage(dir, kind).then((i) => i?.kind ?? null),
         warnings: await itemWarnings(dir, kind),
+        duplicate: false,
+        source: relPath.includes(path.sep) ? relPath.split(path.sep).slice(0, -1).join("/") : null,
       });
       return;
     }
@@ -107,5 +109,15 @@ export async function detectItems(root: string, archiveName: string): Promise<Mo
   }
 
   await visit(root, 0);
-  return items.sort((a, b) => a.kind.localeCompare(b.kind) || a.id.localeCompare(b.id));
+  items.sort((a, b) => a.kind.localeCompare(b.kind) || a.id.localeCompare(b.id) || a.relPath.localeCompare(b.relPath));
+  const seen = new Set<string>();
+  for (const item of items) {
+    const key = `${item.kind}:${item.id}`;
+    if (seen.has(key)) {
+      item.duplicate = true;
+      item.warnings.push("The same folder name appears more than once in this upload, only one copy can be installed");
+    }
+    seen.add(key);
+  }
+  return items;
 }

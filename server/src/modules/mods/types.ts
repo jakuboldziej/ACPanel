@@ -21,6 +21,8 @@ export interface ModItem {
   validId: boolean;
   image: ImageKind | null;
   warnings: string[];
+  duplicate: boolean;
+  source: string | null;
 }
 
 export interface UploadMeta {
@@ -32,6 +34,7 @@ export interface UploadMeta {
   status: UploadStatus;
   error: string | null;
   items: ModItem[];
+  progress: string | null;
   createdAt: number;
 }
 

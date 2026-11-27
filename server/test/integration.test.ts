@@ -102,6 +102,87 @@ describe.skipIf(!hasCommand("7z"))("mod upload", () => {
     expect(fs.readdirSync(path.join(target, "skins", "red"))).toEqual(["preview.jpg"]);
   });
 
+  async function uploadBytes(fileName: string, bytes: Buffer) {
+    const mods = await import("../src/modules/mods/service.js");
+    const created = await mods.createUpload(fileName, bytes.length);
+    await mods.writeChunk(created.id, 0, Readable.from(bytes));
+    await mods.completeUpload(created.id);
+    let upload = await mods.getUpload(created.id);
+    for (let i = 0; i < 100 && upload.status === "extracting"; i++) {
+      await new Promise((r) => setTimeout(r, 100));
+      upload = await mods.getUpload(created.id);
+    }
+    return upload;
+  }
+
+  function pyZip(file: string, script: string) {
+    execFileSync("python3", ["-c", `import zipfile, io\nz=zipfile.ZipFile(${JSON.stringify(file)},'w')\n${script}\nz.close()`]);
+  }
+
+  const carZip = (name: string) =>
+    `b=io.BytesIO(); i=zipfile.ZipFile(b,'w'); i.writestr('${name}/data.acd','x'); i.writestr('${name}/ui/ui_car.json','{"name":"${name}"}'); i.close()`;
+
+  it("expands nested archives and flags duplicates", async () => {
+    const file = path.join(tmpDir(), "pack.zip");
+    pyZip(
+      file,
+      [
+        carZip("car_a"), "z.writestr('Cars/car_a_v1.zip', b.getvalue())",
+        carZip("car_b"), "z.writestr('Cars/car_b_v1.zip', b.getvalue())",
+        carZip("car_a"), "z.writestr('Cars/car_a_copy.zip', b.getvalue())",
+      ].join("\n"),
+    );
+    const upload = await uploadBytes("pack.zip", fs.readFileSync(file));
+    expect(upload.status).toBe("ready");
+    expect(upload.items.map((i) => [i.id, i.duplicate, i.source])).toEqual([
+      ["car_a", false, "Cars/car_a_copy"],
+      ["car_a", true, "Cars/car_a_v1"],
+      ["car_b", false, "Cars/car_b_v1"],
+    ]);
+  });
+
+  it("keeps archives that belong to a car (CSP extension zips) untouched", async () => {
+    const file = path.join(tmpDir(), "csp-pack.zip");
+    pyZip(
+      file,
+      [
+        "f=io.BytesIO(); g=zipfile.ZipFile(f,'w'); g.writestr('font.ttf','x'); g.close()",
+        "b=io.BytesIO(); i=zipfile.ZipFile(b,'w'); i.writestr('csp_car/data.acd','x'); i.writestr('csp_car/extension/fonts.zip', f.getvalue()); i.close()",
+        "z.writestr('Cars/csp_car_v1.zip', b.getvalue())",
+      ].join("\n"),
+    );
+    const upload = await uploadBytes("csp-pack.zip", fs.readFileSync(file));
+    expect(upload.status).toBe("ready");
+    const mods = await import("../src/modules/mods/service.js");
+    await mods.installUpload(upload.id, [{ key: upload.items[0]!.key, overwrite: false }], false);
+    const ext = path.join(acRoot, "content", "cars_off", "csp_car", "extension");
+    expect(fs.readdirSync(ext)).toEqual(["fonts.zip"]);
+  });
+
+  it("rejects a malicious archive nested inside a pack", async () => {
+    const file = path.join(tmpDir(), "evil-pack.zip");
+    pyZip(file, ["b=io.BytesIO(); i=zipfile.ZipFile(b,'w'); i.writestr('../../escape.txt','x'); i.close()", "z.writestr('Cars/evil.zip', b.getvalue())", carZip("car_ok"), "z.writestr('Cars/ok.zip', b.getvalue())"].join("\n"));
+    const upload = await uploadBytes("evil-pack.zip", fs.readFileSync(file));
+    expect(upload.status).toBe("failed");
+    expect(upload.error).toMatch(/evil\.zip.*unsafe path/);
+  });
+
+  it("rejects archives nested more than two levels deep", async () => {
+    const file = path.join(tmpDir(), "deep.zip");
+    pyZip(
+      file,
+      [
+        carZip("deep_car"),
+        "b2=io.BytesIO(); j=zipfile.ZipFile(b2,'w'); j.writestr('l2/car.zip', b.getvalue()); j.close()",
+        "b3=io.BytesIO(); k=zipfile.ZipFile(b3,'w'); k.writestr('l1/inner.zip', b2.getvalue()); k.close()",
+        "z.writestr('top/outer.zip', b3.getvalue())",
+      ].join("\n"),
+    );
+    const upload = await uploadBytes("deep.zip", fs.readFileSync(file));
+    expect(upload.status).toBe("failed");
+    expect(upload.error).toMatch(/deeper than 2 levels/);
+  });
+
   it("rejects an oversized chunk", async () => {
     const mods = await import("../src/modules/mods/service.js");
     const created = await mods.createUpload("a.zip", 5);

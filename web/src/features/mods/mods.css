@@ -36,4 +36,7 @@
 @media (max-width: 720px) {
   .dropzone-title .mobile-only { display: inline; }
 }
+.item-list-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 8px; }
+.item-list-head .muted { margin-right: auto; font-size: 14px; }
+.item-source { font-size: 12px; padding: 0 8px 2px; }
 }

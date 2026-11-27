@@ -8,6 +8,7 @@ import { config } from "../../config.js";
 import { HttpError } from "../../core/fsutil.js";
 import { extractArchive, listArchive } from "./archive.js";
 import { detectItems } from "./detect.js";
+import { expandNestedArchives } from "./nested.js";
 import { UPLOAD_ID, archivePath, extractDir, freeBytes, loadMeta, saveMeta, uploadDir, view } from "./store.js";
 import { ALLOWED_EXT, CHUNK_SIZE, type UploadMeta, type UploadView } from "./types.js";
 
@@ -35,6 +36,7 @@ export async function createUpload(fileName: string, size: number): Promise<Uplo
     status: "uploading",
     error: null,
     items: [],
+    progress: null,
     createdAt: Date.now(),
   };
   await fs.mkdir(uploadDir(meta.id), { recursive: true });
@@ -90,7 +92,18 @@ async function processUpload(meta: UploadMeta): Promise<void> {
     }
     await extractArchive(archivePath(meta), extractDir(meta.id));
     await fs.rm(archivePath(meta), { force: true });
+    await expandNestedArchives(extractDir(meta.id), {
+      budgetBytes: config.maxExtractMb * 1024 * 1024 - listing.unpackedBytes,
+      freeBytes: () => freeBytes(config.uploadsDir),
+      onProgress: async (done, total) => {
+        meta.progress = `Unpacking nested archives ${done + 1}/${total}`;
+        await saveMeta(meta);
+      },
+    });
+    meta.progress = "Scanning for cars and tracks";
+    await saveMeta(meta);
     meta.items = await detectItems(extractDir(meta.id), meta.fileName);
+    meta.progress = null;
     meta.status = "ready";
     if (meta.items.length === 0) {
       meta.status = "failed";
@@ -101,6 +114,7 @@ async function processUpload(meta: UploadMeta): Promise<void> {
     meta.error = (e as Error).message;
   }
   if (meta.status === "failed") {
+    meta.progress = null;
     await fs.rm(archivePath(meta), { force: true }).catch(() => {});
     await fs.rm(extractDir(meta.id), { recursive: true, force: true }).catch(() => {});
   }

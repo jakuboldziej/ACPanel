@@ -8,9 +8,25 @@ import { formatBytes } from "@/lib/format";
 export function InstallForm(props: { upload: UploadView; onInstalled: (r: InstallResult[]) => void }) {
   const { upload } = props;
   const confirm = useConfirm();
-  const [picked, setPicked] = useState<Set<string>>(
-    () => new Set(upload.items.filter((i) => i.validId && !i.existing).map((i) => i.key)),
-  );
+  const selectable = upload.items.filter((i) => i.validId);
+  const defaults = () => new Set(selectable.filter((i) => !i.existing && !i.duplicate).map((i) => i.key));
+  const [picked, setPicked] = useState<Set<string>>(defaults);
+
+  function toggle(key: string) {
+    const item = upload.items.find((i) => i.key === key)!;
+    setPicked((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+        return next;
+      }
+      for (const other of upload.items) {
+        if (other.key !== key && other.kind === item.kind && other.id === item.id) next.delete(other.key);
+      }
+      next.add(key);
+      return next;
+    });
+  }
   const [slim, setSlim] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,6 +64,20 @@ export function InstallForm(props: { upload: UploadView; onInstalled: (r: Instal
 
   return (
     <div className="install">
+      {upload.items.length > 1 && (
+        <div className="item-list-head">
+          <span className="muted">
+            Found {upload.items.filter((i) => i.kind === "car").length} cars,{" "}
+            {upload.items.filter((i) => i.kind === "track").length} tracks
+          </span>
+          <Button variant="outline" size="sm" onClick={() => setPicked(defaults())}>
+            Select new
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setPicked(new Set())}>
+            Select none
+          </Button>
+        </div>
+      )}
       <ul className="item-list">
         {upload.items.map((item, index) => (
           <li key={item.key} className={item.existing ? "exists" : ""}>
@@ -60,14 +90,7 @@ export function InstallForm(props: { upload: UploadView; onInstalled: (r: Instal
                 type="checkbox"
                 disabled={!item.validId}
                 checked={picked.has(item.key)}
-                onChange={() =>
-                  setPicked((prev) => {
-                    const next = new Set(prev);
-                    if (next.has(item.key)) next.delete(item.key);
-                    else next.add(item.key);
-                    return next;
-                  })
-                }
+                onChange={() => toggle(item.key)}
               />
               <span className="tag">{item.kind}</span>
               <span className="name">{item.name}</span>
@@ -75,7 +98,9 @@ export function InstallForm(props: { upload: UploadView; onInstalled: (r: Instal
               <span className="muted">{formatBytes(item.sizeBytes)}</span>
               {item.existing && <span className="tag warn">replaces existing ({item.existing})</span>}
               {!item.validId && <span className="tag warn">invalid folder name</span>}
+              {item.duplicate && <span className="tag warn">duplicate</span>}
             </label>
+            {item.source && <div className="item-source muted">from {item.source}</div>}
             {item.warnings.map((w) => (
               <div key={w} className="item-warning">
                 {w}

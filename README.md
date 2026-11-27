@@ -57,6 +57,12 @@ Optional: `HOST=127.0.0.1` (only reachable through a reverse proxy or tunnel), `
 When production uses port 8090, run development on another port: `PORT=8095` in the development `.env`
 (the Vite proxy follows it).
 
+### Mod uploads
+
+Upload a single mod archive (`.zip`, `.rar`, `.7z`) or a pack of archives, e.g. one zip with a zip per car.
+Archives inside the upload are unpacked up to two levels deep, except archives inside a car or track folder
+(CSP `extension/*.zip` files stay untouched). All unpacked data counts toward `MAX_EXTRACT_MB`.
+
 ### RCON (Players tab)
 
 Kick, ban, chat announcements, restarts with a countdown and live session controls use AssettoServer's RCON.

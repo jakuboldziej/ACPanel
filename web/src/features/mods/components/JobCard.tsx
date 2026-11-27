@@ -14,7 +14,7 @@ export function JobCard(props: { job: Job; onDismiss: () => void; onUpdate: (p: 
   else if (job.phase === "uploading") phaseLabel = `Uploading ${pct}% · ${formatBytes(job.uploaded)} / ${formatBytes(job.size)}`;
   else if (job.phase === "done") phaseLabel = "Installed";
   else if (job.phase === "error") phaseLabel = "Failed";
-  else if (status === "extracting") phaseLabel = "Extracting and scanning…";
+  else if (status === "extracting") phaseLabel = job.upload?.progress ?? "Extracting and scanning…";
   else if (status === "installing") phaseLabel = "Installing…";
   else phaseLabel = "Ready to install";
 
