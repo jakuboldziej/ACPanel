@@ -37,19 +37,19 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
     headers: { "Content-Type": "application/json", ...init?.headers },
   });
   const data = await res.json().catch(() => ({}));
-  if (res.status === 401 && !url.startsWith("/api/auth/")) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
+  if (res.status === 401 && !url.startsWith("/admin/api/auth/")) window.dispatchEvent(new Event(UNAUTHORIZED_EVENT));
   if (!res.ok) throw new ApiError(data.error ?? `HTTP ${res.status}`);
   return data as T;
 }
 
 export const api = {
-  getCars: () => call<CarsState>("/api/cars"),
+  getCars: () => call<CarsState>("/admin/api/cars"),
   deleteCar: (id: string) =>
-    call<{ id: string; freedBytes: number }>(`/api/cars/${encodeURIComponent(id)}`, { method: "DELETE" }),
+    call<{ id: string; freedBytes: number }>(`/admin/api/cars/${encodeURIComponent(id)}`, { method: "DELETE" }),
   preview: (enabled: string[], maxSlotsPerCar: number) =>
-    call<ApplyPlan>("/api/cars/preview", { method: "POST", body: JSON.stringify({ enabled, maxSlotsPerCar }) }),
+    call<ApplyPlan>("/admin/api/cars/preview", { method: "POST", body: JSON.stringify({ enabled, maxSlotsPerCar }) }),
   apply: (enabled: string[], maxSlotsPerCar: number) =>
-    call<ApplyPlan & { backup: string; restartNeeded: boolean }>("/api/cars/apply", {
+    call<ApplyPlan & { backup: string; restartNeeded: boolean }>("/admin/api/cars/apply", {
       method: "POST",
       body: JSON.stringify({ enabled, maxSlotsPerCar }),
     }),
@@ -96,18 +96,18 @@ export interface TrackPlan {
 }
 
 export const tracksApi = {
-  get: () => call<TracksState>("/api/tracks"),
+  get: () => call<TracksState>("/admin/api/tracks"),
   remove: (id: string) =>
-    call<{ id: string; freedBytes: number }>(`/api/tracks/${encodeURIComponent(id)}`, { method: "DELETE" }),
+    call<{ id: string; freedBytes: number }>(`/admin/api/tracks/${encodeURIComponent(id)}`, { method: "DELETE" }),
   preview: (track: string, layout: string) =>
-    call<TrackPlan>("/api/tracks/preview", { method: "POST", body: JSON.stringify({ track, layout }) }),
+    call<TrackPlan>("/admin/api/tracks/preview", { method: "POST", body: JSON.stringify({ track, layout }) }),
   apply: (track: string, layout: string) =>
-    call<TrackPlan & { backup: string; restartNeeded: boolean }>("/api/tracks/apply", {
+    call<TrackPlan & { backup: string; restartNeeded: boolean }>("/admin/api/tracks/apply", {
       method: "POST",
       body: JSON.stringify({ track, layout }),
     }),
   setPitboxes: (track: string, layout: string, pitboxes: number | null) =>
-    call<{ ok: true }>("/api/tracks/pitboxes", { method: "PUT", body: JSON.stringify({ track, layout, pitboxes }) }),
+    call<{ ok: true }>("/admin/api/tracks/pitboxes", { method: "PUT", body: JSON.stringify({ track, layout, pitboxes }) }),
 };
 
 export interface LiveInfo {
@@ -132,16 +132,16 @@ export interface ServiceStatus {
 }
 
 export const serverApi = {
-  status: () => call<ServiceStatus>("/api/server/status"),
-  restart: () => call<ServiceStatus & { ready: boolean }>("/api/server/restart", { method: "POST" }),
-  logs: (lines: number) => call<{ lines: string[] }>(`/api/server/logs?lines=${lines}`),
+  status: () => call<ServiceStatus>("/admin/api/server/status"),
+  restart: () => call<ServiceStatus & { ready: boolean }>("/admin/api/server/restart", { method: "POST" }),
+  logs: (lines: number) => call<{ lines: string[] }>(`/admin/api/server/logs?lines=${lines}`),
 };
 
 export const authApi = {
-  me: () => call<{ loggedIn: boolean }>("/api/auth/me"),
+  me: () => call<{ loggedIn: boolean }>("/admin/api/auth/me"),
   login: (password: string) =>
-    call<{ loggedIn: true }>("/api/auth/login", { method: "POST", body: JSON.stringify({ password }) }),
-  logout: () => call<{ loggedIn: false }>("/api/auth/logout", { method: "POST" }),
+    call<{ loggedIn: true }>("/admin/api/auth/login", { method: "POST", body: JSON.stringify({ password }) }),
+  logout: () => call<{ loggedIn: false }>("/admin/api/auth/logout", { method: "POST" }),
 };
 
 export interface PluginInfo {
@@ -164,17 +164,17 @@ export interface PluginConfig {
 }
 
 export const pluginsApi = {
-  list: () => call<{ plugins: PluginInfo[]; extraCfgExists: boolean }>("/api/plugins"),
+  list: () => call<{ plugins: PluginInfo[]; extraCfgExists: boolean }>("/admin/api/plugins"),
   setEnabled: (enabled: string[]) =>
-    call<{ backup: string; enabled: string[] }>("/api/plugins", { method: "PUT", body: JSON.stringify({ enabled }) }),
-  getConfig: (name: string) => call<PluginConfig>(`/api/plugins/${encodeURIComponent(name)}/config`),
+    call<{ backup: string; enabled: string[] }>("/admin/api/plugins", { method: "PUT", body: JSON.stringify({ enabled }) }),
+  getConfig: (name: string) => call<PluginConfig>(`/admin/api/plugins/${encodeURIComponent(name)}/config`),
   saveConfig: (name: string, yaml: string) =>
-    call<{ backup: string | null }>(`/api/plugins/${encodeURIComponent(name)}/config`, {
+    call<{ backup: string | null }>(`/admin/api/plugins/${encodeURIComponent(name)}/config`, {
       method: "PUT",
       body: JSON.stringify({ yaml }),
     }),
   fromReference: (name: string) =>
-    call<PluginConfig>(`/api/plugins/${encodeURIComponent(name)}/config/from-reference`, { method: "POST" }),
+    call<PluginConfig>(`/admin/api/plugins/${encodeURIComponent(name)}/config/from-reference`, { method: "POST" }),
 };
 
 export type FieldValue = boolean | number | string | null;
@@ -196,11 +196,11 @@ export interface ExtraConfig {
 }
 
 export const extraConfigApi = {
-  get: () => call<ExtraConfig>("/api/extra-config"),
+  get: () => call<ExtraConfig>("/admin/api/extra-config"),
   saveValues: (values: Record<string, FieldValue>) =>
-    call<{ backup: string }>("/api/extra-config/values", { method: "PUT", body: JSON.stringify({ values }) }),
+    call<{ backup: string }>("/admin/api/extra-config/values", { method: "PUT", body: JSON.stringify({ values }) }),
   saveRaw: (yaml: string) =>
-    call<{ backup: string }>("/api/extra-config/raw", { method: "PUT", body: JSON.stringify({ yaml }) }),
+    call<{ backup: string }>("/admin/api/extra-config/raw", { method: "PUT", body: JSON.stringify({ yaml }) }),
 };
 
 export type UploadStatus = "uploading" | "extracting" | "ready" | "installing" | "installed" | "failed";
@@ -247,21 +247,21 @@ export interface InstallResult {
 }
 
 export const modsApi = {
-  settings: () => call<UploadSettings>("/api/mods/settings"),
-  list: () => call<{ uploads: UploadView[] }>("/api/mods/uploads"),
+  settings: () => call<UploadSettings>("/admin/api/mods/settings"),
+  list: () => call<{ uploads: UploadView[] }>("/admin/api/mods/uploads"),
   create: (fileName: string, size: number) =>
-    call<UploadView & { chunkSize: number }>("/api/mods/uploads", {
+    call<UploadView & { chunkSize: number }>("/admin/api/mods/uploads", {
       method: "POST",
       body: JSON.stringify({ fileName, size }),
     }),
-  complete: (id: string) => call<UploadView>(`/api/mods/uploads/${id}/complete`, { method: "POST" }),
-  get: (id: string) => call<UploadView>(`/api/mods/uploads/${id}`),
+  complete: (id: string) => call<UploadView>(`/admin/api/mods/uploads/${id}/complete`, { method: "POST" }),
+  get: (id: string) => call<UploadView>(`/admin/api/mods/uploads/${id}`),
   install: (id: string, items: { key: string; overwrite: boolean }[], slim: boolean) =>
-    call<{ installed: InstallResult[] }>(`/api/mods/uploads/${id}/install`, {
+    call<{ installed: InstallResult[] }>(`/admin/api/mods/uploads/${id}/install`, {
       method: "POST",
       body: JSON.stringify({ items, slim }),
     }),
-  remove: (id: string) => call<{ ok: true }>(`/api/mods/uploads/${id}`, { method: "DELETE" }),
+  remove: (id: string) => call<{ ok: true }>(`/admin/api/mods/uploads/${id}`, { method: "DELETE" }),
 };
 
 export function uploadChunk(
@@ -273,7 +273,7 @@ export function uploadChunk(
 ): Promise<void> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open("PUT", `/api/mods/uploads/${id}/chunks/${index}`);
+    xhr.open("PUT", `/admin/api/mods/uploads/${id}/chunks/${index}`);
     xhr.setRequestHeader("Content-Type", "application/octet-stream");
     xhr.upload.onprogress = (e) => onProgress(e.loaded);
     xhr.onload = () => {
@@ -304,8 +304,8 @@ export interface Rules {
 }
 
 export const rulesApi = {
-  get: () => call<Rules>("/api/rules"),
-  save: (rules: Rules) => call<{ backup: string; rules: Rules }>("/api/rules", { method: "PUT", body: JSON.stringify(rules) }),
+  get: () => call<Rules>("/admin/api/rules"),
+  save: (rules: Rules) => call<{ backup: string; rules: Rules }>("/admin/api/rules", { method: "PUT", body: JSON.stringify(rules) }),
 };
 
 export interface TimedSession {
@@ -349,9 +349,9 @@ export interface SessionsConfig {
 }
 
 export const sessionsApi = {
-  get: () => call<SessionsConfig>("/api/sessions"),
+  get: () => call<SessionsConfig>("/admin/api/sessions"),
   save: (s: SessionsConfig) =>
-    call<{ backup: string; sessions: SessionsConfig }>("/api/sessions", { method: "PUT", body: JSON.stringify(s) }),
+    call<{ backup: string; sessions: SessionsConfig }>("/admin/api/sessions", { method: "PUT", body: JSON.stringify(s) }),
 };
 
 export interface PresetInfo {
@@ -370,12 +370,12 @@ export interface PresetInfo {
 }
 
 export const presetsApi = {
-  list: () => call<{ presets: PresetInfo[] }>("/api/presets"),
+  list: () => call<{ presets: PresetInfo[] }>("/admin/api/presets"),
   save: (name: string, overwrite: boolean) =>
-    call<{ presets: PresetInfo[] }>("/api/presets", { method: "POST", body: JSON.stringify({ name, overwrite }) }),
+    call<{ presets: PresetInfo[] }>("/admin/api/presets", { method: "POST", body: JSON.stringify({ name, overwrite }) }),
   apply: (name: string) =>
-    call<{ backup: string; enabled: string[]; disabled: string[] }>(`/api/presets/${encodeURIComponent(name)}/apply`, {
+    call<{ backup: string; enabled: string[]; disabled: string[] }>(`/admin/api/presets/${encodeURIComponent(name)}/apply`, {
       method: "POST",
     }),
-  remove: (name: string) => call<{ ok: true }>(`/api/presets/${encodeURIComponent(name)}`, { method: "DELETE" }),
+  remove: (name: string) => call<{ ok: true }>(`/admin/api/presets/${encodeURIComponent(name)}`, { method: "DELETE" }),
 };

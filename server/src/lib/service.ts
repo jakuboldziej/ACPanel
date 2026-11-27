@@ -81,6 +81,22 @@ async function httpPort(root: string): Promise<number | null> {
   }
 }
 
+export async function serverRoot(): Promise<string> {
+  if (!config.serviceUnit) return config.acRoot;
+  return (await systemdState(config.serviceUnit)).workingDir ?? config.acRoot;
+}
+
+export async function fetchServerDetails(): Promise<Record<string, unknown> | null> {
+  const port = await httpPort(await serverRoot());
+  if (!port) return null;
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/api/details`, { signal: AbortSignal.timeout(2000) });
+    return res.ok ? ((await res.json()) as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+}
+
 async function fetchLive(root: string): Promise<LiveInfo | null> {
   const port = await httpPort(root);
   if (!port) return null;

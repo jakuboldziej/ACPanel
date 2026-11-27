@@ -176,7 +176,7 @@ export function ModsPage() {
       {showLanHint && (
         <div className="msg warn lan-hint">
           On the local network large files upload much faster through the direct address.{" "}
-          <a href={`${settings!.lanUrl}/#mods`}>Open {settings!.lanUrl}</a>
+          <a href={`${settings!.lanUrl}/admin/#mods`}>Open {settings!.lanUrl}</a>
         </div>
       )}
       {error && <div className="msg err">{error}</div>}
@@ -295,7 +295,7 @@ function InstallForm(props: { upload: UploadView; onInstalled: (r: InstallResult
           <li key={item.key} className={item.existing ? "exists" : ""}>
             <label>
               <Thumb
-                src={item.image ? `/api/mods/uploads/${upload.id}/items/${index}/image` : null}
+                src={item.image ? `/admin/api/mods/uploads/${upload.id}/items/${index}/image` : null}
                 kind={item.image}
               />
               <input

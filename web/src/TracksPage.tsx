@@ -207,7 +207,7 @@ function TrackCard(props: {
   const previewLayout =
     track.layouts.find((l) => l.id === focus && l.hasPreview) ?? track.layouts.find((l) => l.hasPreview) ?? null;
   const src = previewLayout
-    ? `/api/tracks/${encodeURIComponent(track.id)}/image?layout=${encodeURIComponent(previewLayout.id)}`
+    ? `/admin/api/tracks/${encodeURIComponent(track.id)}/image?layout=${encodeURIComponent(previewLayout.id)}`
     : null;
 
   return (
@@ -289,7 +289,7 @@ function LayoutRow(props: {
         {layout.hasOutline && (
           <img
             className="outline"
-            src={`/api/tracks/${encodeURIComponent(props.trackId)}/image?layout=${encodeURIComponent(layout.id)}&kind=outline`}
+            src={`/admin/api/tracks/${encodeURIComponent(props.trackId)}/image?layout=${encodeURIComponent(layout.id)}&kind=outline`}
             alt=""
             loading="lazy"
           />

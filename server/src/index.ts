@@ -17,6 +17,7 @@ import { modsRouter } from "./routes/mods.js";
 import { rulesRouter } from "./routes/rules.js";
 import { sessionsRouter } from "./routes/sessions.js";
 import { presetsRouter } from "./routes/presets.js";
+import { publicRouter } from "./routes/public.js";
 import { cleanupStaleUploads, markInterruptedUploads } from "./lib/mods.js";
 
 if (!isValidHash(config.adminPasswordHash)) {
@@ -40,29 +41,37 @@ app.use((_req, res, next) => {
 });
 app.use(express.json({ limit: "100kb" }));
 
-app.use("/api", checkOrigin);
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
-app.use("/api/auth", authRouter);
-app.use("/api", requireAuth);
-app.use("/api/cars", carsRouter);
-app.use("/api/tracks", tracksRouter);
-app.use("/api/server", serverRouter);
-app.use("/api/plugins", pluginsRouter);
-app.use("/api/extra-config", extraConfigRouter);
-app.use("/api/mods", modsRouter);
-app.use("/api/rules", rulesRouter);
-app.use("/api/sessions", sessionsRouter);
-app.use("/api/presets", presetsRouter);
+app.use("/api/public", publicRouter);
 app.use("/api", (_req, res) => {
   res.status(404).json({ error: "No such endpoint" });
 });
 
+const adminApi = express.Router();
+adminApi.use(checkOrigin);
+adminApi.use("/auth", authRouter);
+adminApi.use(requireAuth);
+adminApi.use("/cars", carsRouter);
+adminApi.use("/tracks", tracksRouter);
+adminApi.use("/server", serverRouter);
+adminApi.use("/plugins", pluginsRouter);
+adminApi.use("/extra-config", extraConfigRouter);
+adminApi.use("/mods", modsRouter);
+adminApi.use("/rules", rulesRouter);
+adminApi.use("/sessions", sessionsRouter);
+adminApi.use("/presets", presetsRouter);
+adminApi.use((_req, res) => {
+  res.status(404).json({ error: "No such endpoint" });
+});
+app.use("/admin/api", adminApi);
+
 const webDist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../../web/dist");
 if (fs.existsSync(webDist)) {
-  app.use(express.static(webDist));
-  app.get(/^(?!\/api).*/, (_req, res) => res.sendFile(path.join(webDist, "index.html")));
+  app.use(express.static(webDist, { index: false }));
+  app.get(/^\/admin(\/.*)?$/, (_req, res) => res.sendFile(path.join(webDist, "admin", "index.html")));
+  app.get(/^(?!\/api(\/|$)).*/, (_req, res) => res.sendFile(path.join(webDist, "index.html")));
 }
 
 const onError: ErrorRequestHandler = (err, _req, res, _next) => {

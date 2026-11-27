@@ -56,13 +56,15 @@ export function setSessionCookie(req: Request, res: Response): void {
     httpOnly: true,
     sameSite: "strict",
     secure: req.secure,
-    path: "/",
+    path: "/admin",
     maxAge: maxAgeMs,
   });
 }
 
 export function clearSessionCookie(req: Request, res: Response): void {
-  res.clearCookie(COOKIE_NAME, { httpOnly: true, sameSite: "strict", secure: req.secure, path: "/" });
+  for (const p of ["/admin", "/"]) {
+    res.clearCookie(COOKIE_NAME, { httpOnly: true, sameSite: "strict", secure: req.secure, path: p });
+  }
 }
 
 export function isAuthenticated(req: Request): boolean {
@@ -116,4 +118,23 @@ export function recordLoginFailure(ip: string): void {
 
 export function clearLoginFailures(ip: string): void {
   failures.delete(ip);
+}
+
+export function rateLimit(perMinute: number): RequestHandler {
+  const hits = new Map<string, { count: number; reset: number }>();
+  return (req, res, next) => {
+    const ip = clientIp(req);
+    const now = Date.now();
+    let h = hits.get(ip);
+    if (!h || h.reset < now) {
+      h = { count: 0, reset: now + 60_000 };
+      hits.set(ip, h);
+      if (hits.size > 10_000) for (const [k, v] of hits) if (v.reset < now) hits.delete(k);
+    }
+    if (++h.count > perMinute) {
+      res.set("Retry-After", String(Math.ceil((h.reset - now) / 1000))).status(429).json({ error: "Too many requests" });
+      return;
+    }
+    next();
+  };
 }

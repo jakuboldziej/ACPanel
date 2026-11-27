@@ -25,7 +25,7 @@ export function LogsPage() {
       .then(({ lines }) => {
         if (cancelled) return;
         setLines(lines);
-        source = new EventSource("/api/server/logs/stream");
+        source = new EventSource("/admin/api/server/logs/stream");
         source.onopen = () => setConnected(true);
         source.onerror = () => setConnected(false);
         source.onmessage = (e) => {

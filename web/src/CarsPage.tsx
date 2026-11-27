@@ -263,7 +263,7 @@ export function CarsPage() {
             <li key={c.id} className={`${on ? "on" : ""} ${changed ? "changed" : ""} ${c.empty ? "empty" : ""}`}>
               <label>
                 <input type="checkbox" checked={on} disabled={c.empty} onChange={() => toggle(c.id)} />
-                <Thumb src={c.image ? `/api/cars/${encodeURIComponent(c.id)}/image` : null} kind={c.image} />
+                <Thumb src={c.image ? `/admin/api/cars/${encodeURIComponent(c.id)}/image` : null} kind={c.image} />
                 <span className="car-text">
                   <span className="name" title={c.id}>
                     {c.name}

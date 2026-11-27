@@ -57,6 +57,21 @@ Optional: `HOST=127.0.0.1` (only reachable through a reverse proxy or tunnel), `
 When production uses port 8090, run development on another port: `PORT=8095` in the development `.env`
 (the Vite proxy follows it).
 
+### URLs
+
+| Path | What |
+|---|---|
+| `/` | public server page (no login) |
+| `/admin/` | admin panel (login required) |
+| `/api/public/*` | public read-only API (rate limited, no Steam IDs) |
+| `/admin/api/*` | admin API (session cookie with `Path=/admin`) |
+| `/api/health` | health check used by `npm run deploy` |
+
+In development the public page is at `http://localhost:5173/` and the panel at `http://localhost:5173/admin/`.
+Old links like `/#cars` redirect to `/admin/#cars`.
+
+With Cloudflare Access, protect only `<host>/admin` so the public page stays open.
+
 ### Reverse proxy / tunnel
 
 The panel works behind any HTTPS reverse proxy or Cloudflare Tunnel without extra configuration:
