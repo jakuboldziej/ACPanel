@@ -1,0 +1,9 @@
+@layer components {
+.thumb { width: 72px; height: 40px; object-fit: cover; border-radius: 4px; background: var(--border); flex-shrink: 0; display: inline-block; }
+.thumb.badge { object-fit: contain; padding: 4px; background: var(--card); border: 1px solid var(--border); }
+.thumb.none { opacity: .4; }
+.thumb.large { width: 100%; height: auto; aspect-ratio: 16 / 9; object-fit: cover; margin-bottom: 8px; }
+@media (max-width: 720px) {
+  .thumb { width: 60px; height: 34px; }
+}
+}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { IniDoc } from "../src/lib/ini.js";
+import { IniDoc } from "../src/core/ini.js";
 
 const SAMPLE = ["[SERVER]", "NAME=Test", "; comment", "", "[RACE]", "LAPS=5", "", ";[OLD]", ";X=1", ""].join("\r\n");
 

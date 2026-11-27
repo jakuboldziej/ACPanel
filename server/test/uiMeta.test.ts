@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { carMeta, normalizeTag, readUiJson, trackMeta } from "../src/lib/uiMeta.js";
+import { carMeta, normalizeTag, readUiJson, trackMeta } from "../src/core/uiMeta.js";
 import { tmpDir } from "./helpers.js";
 
 describe("ui_*.json parsing", () => {

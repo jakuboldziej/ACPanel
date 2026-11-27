@@ -1,0 +1,12 @@
+@layer components {
+.logs .toolbar { align-items: center; margin-top: 0; }
+.live { font-size: 13px; color: var(--muted-foreground); }
+.live.on { color: #2ea043; }
+.log-box { height: calc(100vh - 220px); min-height: 300px; overflow: auto; margin: 0; padding: 12px; font: 12.5px/1.45 ui-monospace, "Cascadia Code", Consolas, monospace; white-space: pre-wrap; word-break: break-word; }
+.log-line.lvl-WRN { color: #c98a00; }
+.log-line.lvl-ERR, .log-line.lvl-FTL { color: #e5534b; font-weight: 600; }
+.log-line.lvl-DBG, .log-line.lvl-VRB { color: var(--muted-foreground); }
+@media (max-width: 720px) {
+  .log-box { height: calc(100vh - 260px); font-size: 11.5px; padding: 8px; }
+}
+}

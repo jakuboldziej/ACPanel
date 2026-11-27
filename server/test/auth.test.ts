@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { createSessionToken, verifySessionToken } from "../src/lib/auth.js";
-import { hashPassword, isValidHash, verifyPassword } from "../src/lib/password.js";
+import { createSessionToken, verifySessionToken } from "../src/modules/auth/auth.js";
+import { hashPassword, isValidHash, verifyPassword } from "../src/modules/auth/password.js";
 
 describe("password hashing", () => {
   it("verifies the right password only", async () => {

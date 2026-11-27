@@ -83,6 +83,31 @@ Requirements for the proxy: forward the original `Host` header and `X-Forwarded-
 - Node.js 22+
 - `7z` with RAR support for mod uploads (Ubuntu/Debian: `sudo apt install 7zip 7zip-rar`)
 
+## Project structure
+
+```
+server/src/
+  index.ts              startup checks + listen
+  app.ts                Express app factory (public site, /api/public, /admin/api)
+  config.ts             environment configuration
+  core/                 shared helpers: fs, INI, YAML, locks, HTTP errors, previews, ui_*.json parsing
+  modules/<feature>/    one folder per feature: service.ts (logic) + routes.ts (HTTP)
+    index.ts            registry of admin modules mounted under /admin/api
+server/test/            Vitest unit and integration tests
+
+web/src/
+  apps/admin/           admin entry, auth gate, layout, lazy-loaded tab registry (tabs.ts)
+  apps/public/          public site entry
+  features/<feature>/   page, components/, hooks/, api.ts (types + calls), <feature>.css
+  components/           shared components (confirm dialog, Thumb, YamlEditor) and ui/ (shadcn)
+  lib/                  http client, formatting, theme
+  styles/               index.css (Tailwind + shadcn theme), base.css (shared styles)
+```
+
+Adding a feature: create `server/src/modules/<name>/` with `service.ts` and `routes.ts`, register the router in
+`modules/index.ts`, then create `web/src/features/<name>/` and add the page to `apps/admin/tabs.ts`
+(and its id to `tabIds.ts`). Each admin page is loaded on demand, together with its CSS.
+
 ## Features
 
 - **Cars** – enabling/disabling (moving between `content/cars` <-> `content/cars_off`),

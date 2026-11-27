@@ -1,0 +1,4 @@
+@layer components {
+.settings .toolbar { align-items: center; margin-top: 0; }
+.settings .toolbar [data-variant="default"] { margin-left: 0; }
+}

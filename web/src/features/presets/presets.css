@@ -1,0 +1,22 @@
+@layer components {
+.preset-save { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.preset-save .num-field input[type="text"] { width: 260px; }
+.preset-save [data-variant="default"] { margin-left: 0; }
+.preset-save .field-desc { width: 100%; margin: 0; }
+.preset-list { list-style: none; padding: 0; margin: 16px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; }
+.preset { display: flex; flex-direction: column; gap: 8px; }
+.preset.active { outline: 2px solid #2ea043; }
+.preset-head { display: flex; align-items: center; gap: 8px; }
+.preset-head .name { font-weight: 600; font-size: 16px; }
+.preset-meta { display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
+.preset-meta .small { font-size: 12px; }
+.preset .msg { margin-top: 0; }
+.preset-actions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: auto; }
+.preset-actions [data-variant="default"] { margin-left: 0; }
+.preset-actions .icon-btn { margin-right: 0; margin-left: auto; }
+@media (max-width: 720px) {
+  .preset-save .num-field { flex: 1 1 100%; }
+  .preset-save .num-field input[type="text"] { width: 100%; }
+  .preset-save [data-variant="default"] { flex: 1; }
+}
+}

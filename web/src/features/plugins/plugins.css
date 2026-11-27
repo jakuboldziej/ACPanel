@@ -1,0 +1,30 @@
+@layer components {
+.plugin-list { list-style: none; padding: 0; margin: 16px 0 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 10px; }
+.plugin { display: flex; flex-direction: column; gap: 6px; padding: 12px; }
+.plugin.on { background: var(--on); }
+.plugin.changed { outline: 2px solid #e0b000; }
+.plugin-head { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.plugin-head .name { font-weight: 600; }
+.plugin-head .tag:first-of-type { margin-left: auto; }
+.plugin-desc { margin: 0; font-size: 13px; flex: 1; }
+.plugin [data-slot="button"] { align-self: flex-start; }
+.editor { margin-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.editor-head { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; }
+.editor-head > div:first-child { margin-right: auto; }
+.editor-head .value { font-size: 15px; }
+.editor .msg { margin-top: 0; }
+.editor-panes { display: grid; gap: 12px; }
+.editor-panes.split { grid-template-columns: 1fr 1fr; }
+@media (max-width: 800px) {
+  .editor-panes.split { grid-template-columns: 1fr; }
+}
+.editor-actions { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.editor-actions .muted { margin-right: auto; font-size: 13px; }
+.editor-actions [data-variant="default"] { margin-left: 0; }
+@media (max-width: 720px) {
+  .editor-head > div:first-child { flex-basis: 100%; }
+  .editor-head .value { overflow-wrap: anywhere; }
+  .editor-actions { flex-wrap: wrap; }
+  .editor-actions .muted { flex-basis: 100%; }
+}
+}

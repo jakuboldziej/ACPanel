@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseYaml, stringifyYaml, validateAgainst } from "../src/lib/yamlFile.js";
+import { parseYaml, stringifyYaml, validateAgainst } from "../src/core/yamlFile.js";
 
 const EXTRA = [
   "# Force headlights on for all cars",

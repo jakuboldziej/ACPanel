@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getServerKey, setServerKeys } from "../src/lib/serverCfg.js";
+import { getServerKey, setServerKeys } from "../src/core/serverCfg.js";
 
 describe("server_cfg [SERVER] helpers", () => {
   const ini = "[SERVER]\r\nNAME=x\r\nMAX_CLIENTS=9\r\n\r\n[PRACTICE]\r\nTIME=60\r\n";

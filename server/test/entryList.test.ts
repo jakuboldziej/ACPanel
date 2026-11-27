@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { allocateSlots, renderEntryList } from "../src/lib/entryList.js";
+import { allocateSlots, renderEntryList } from "../src/modules/cars/entryList.js";
 
 describe("allocateSlots", () => {
   it("spreads pitboxes evenly, earlier cars get the remainder", () => {

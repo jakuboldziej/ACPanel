@@ -16,7 +16,7 @@ const enabledCars = () => fs.readdirSync(path.join(acRoot, "content", "cars")).s
 
 describe("cars", () => {
   it("enables and disables cars and writes entry_list", async () => {
-    const { applyCars } = await import("../src/lib/cars.js");
+    const { applyCars } = await import("../src/modules/cars/service.js");
     const res = await applyCars(["abarth500", "bmw_m3_e30"], 3);
     expect(res.enable).toEqual(["abarth500"]);
     expect(enabledCars()).toEqual(["abarth500", "bmw_m3_e30"]);
@@ -26,7 +26,7 @@ describe("cars", () => {
   });
 
   it("refuses empty placeholder folders and unsafe names", async () => {
-    const { applyCars } = await import("../src/lib/cars.js");
+    const { applyCars } = await import("../src/modules/cars/service.js");
     await expect(applyCars(["ks_empty_placeholder"])).rejects.toThrow(/empty folder/);
     await expect(applyCars(["../etc"])).rejects.toThrow(/Invalid name/);
   });
@@ -34,9 +34,9 @@ describe("cars", () => {
 
 describe("presets", () => {
   it("saves, detects as current and restores cars and track", async () => {
-    const presets = await import("../src/lib/presets.js");
-    const cars = await import("../src/lib/cars.js");
-    const tracks = await import("../src/lib/tracks.js");
+    const presets = await import("../src/modules/presets/service.js");
+    const cars = await import("../src/modules/cars/service.js");
+    const tracks = await import("../src/modules/tracks/service.js");
 
     const saved = await presets.savePreset("gt", false);
     expect(saved.find((p) => p.name === "gt")).toMatchObject({ active: true, track: "ks_nordschleife", slots: 9 });
@@ -53,7 +53,7 @@ describe("presets", () => {
   });
 
   it("refuses presets with missing cars", async () => {
-    const presets = await import("../src/lib/presets.js");
+    const presets = await import("../src/modules/presets/service.js");
     const dir = path.join(acRoot, "presets", "broken");
     fs.mkdirSync(dir, { recursive: true });
     fs.copyFileSync(path.join(acRoot, "cfg", "server_cfg.ini"), path.join(dir, "server_cfg.ini"));
@@ -79,7 +79,7 @@ describe.skipIf(!hasCommand("7z"))("mod upload", () => {
     execFileSync("7z", ["a", "-bd", archive, "test_car"], { cwd: src, stdio: "ignore" });
     const bytes = fs.readFileSync(archive);
 
-    const mods = await import("../src/lib/mods.js");
+    const mods = await import("../src/modules/mods/service.js");
     const created = await mods.createUpload("test_car.zip", bytes.length);
     await mods.writeChunk(created.id, 0, Readable.from(bytes));
     await mods.completeUpload(created.id);
@@ -103,7 +103,7 @@ describe.skipIf(!hasCommand("7z"))("mod upload", () => {
   });
 
   it("rejects an oversized chunk", async () => {
-    const mods = await import("../src/lib/mods.js");
+    const mods = await import("../src/modules/mods/service.js");
     const created = await mods.createUpload("a.zip", 5);
     await expect(mods.writeChunk(created.id, 0, Readable.from(Buffer.alloc(10)))).rejects.toThrow(/larger than expected/);
   });

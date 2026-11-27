@@ -1,0 +1,7 @@
+@layer components {
+.status { margin-left: auto; display: flex; align-items: center; gap: 10px; font-size: 14px; flex-wrap: wrap; }
+@media (max-width: 720px) {
+  .topbar .status { order: 3; width: 100%; margin-left: 0; gap: 6px 10px; font-size: 13px; }
+  .topbar .status [data-slot="button"] { margin-left: auto; }
+}
+}

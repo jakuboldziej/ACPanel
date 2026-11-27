@@ -1,0 +1,35 @@
+@layer components {
+.layout-pick, .pitboxes { padding: 7px 12px; border: 1px solid var(--border); border-radius: var(--radius-md, 8px); background: var(--card); cursor: pointer; transition: background .15s; }
+.layout-pick:hover:not(:disabled), .pitboxes:hover { background: var(--muted); }
+.layout-pick:disabled { cursor: default; }
+.selection { margin-top: 12px; }
+.selection-head { display: flex; flex-wrap: wrap; gap: 24px; align-items: end; }
+.track-list { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); gap: 10px; }
+.track { padding: 12px; }
+.track.empty { opacity: .55; }
+.track-head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.track-head .name { font-weight: 600; }
+.track-head .id, .layout .id { color: var(--muted-foreground); font-size: 12px; }
+.layouts { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 4px; }
+.layout { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.layout .msg { width: 100%; margin-top: 4px; }
+.layout-pick { flex: 1; display: flex; align-items: center; gap: 8px; text-align: left; min-width: 0; }
+.layout.current .layout-pick { background: var(--on); opacity: 1; }
+.layout.selected .layout-pick { outline: 2px solid var(--primary); }
+.pitboxes { font-size: 13px; white-space: nowrap; }
+.pitboxes.unknown { background: var(--warn); }
+.pitbox-edit { display: flex; gap: 4px; }
+.pitbox-edit input { width: 70px; }
+.track-meta { display: flex; align-items: center; justify-content: space-between; margin: -4px 0 8px; font-size: 13px; }
+.track-meta .icon-btn { margin-right: 0; }
+.layout-pick .outline { width: 34px; height: 34px; object-fit: contain; flex-shrink: 0; filter: invert(0); }
+:root:not(.dark) .layout-pick .outline { filter: invert(1); }
+.layout-text { display: flex; flex-direction: column; min-width: 0; }
+.layout-text .id { font-size: 12px; color: var(--muted-foreground); }
+@media (max-width: 720px) {
+  .selection-head { gap: 12px; }
+  .selection-head > div { flex-basis: 100%; }
+  .selection-head [data-slot="button"] { flex: 1; }
+  .selection-head [data-slot="button"]:first-of-type { margin-left: 0; }
+}
+}

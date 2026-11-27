@@ -1,0 +1,25 @@
+@layer components {
+.sessions .toolbar, .presets .toolbar { align-items: center; margin-top: 0; }
+.sessions .toolbar [data-variant="default"] { margin-left: 0; }
+.sess-card { margin-top: 12px; display: flex; flex-direction: column; gap: 10px; }
+.sess-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.sess-card-head h3 { margin: 0; font-size: 16px; }
+.sess-row { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; padding: 8px 0; border-top: 1px solid var(--border); }
+.sess-row:first-of-type { border-top: 0; }
+.sess-row.off .num-field, .sess-row.off .check-field { opacity: .5; }
+.sess-row .rule-toggle { min-width: 130px; align-self: center; }
+.time-slider { flex: 1; min-width: 200px; align-self: center; accent-color: var(--primary); }
+.grip-presets { display: flex; flex-wrap: wrap; gap: 6px; }
+.weather-row { align-items: end; }
+.weather-index { font-weight: 600; align-self: center; min-width: 24px; }
+.weather-row .num-field input[type="number"] { width: 70px; }
+.weather-row .icon-btn { margin-left: auto; align-self: center; }
+@media (max-width: 720px) {
+  .sess-row { gap: 10px; }
+  .sess-row .rule-toggle { flex-basis: 100%; }
+  .sess-row > .num-field:has(input[type="text"]) { flex: 1 1 100%; }
+  .num-field input[type="number"], .weather-row .num-field input[type="number"] { width: 84px; }
+  .time-slider { flex-basis: 100%; min-width: 0; order: 3; }
+  .weather-row .icon-btn { margin-left: 0; }
+}
+}

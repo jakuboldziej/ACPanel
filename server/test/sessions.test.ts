@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { minutesToSunAngle, readSessions, sunAngleToMinutes, writeSessions } from "../src/lib/sessions.js";
+import { minutesToSunAngle, readSessions, sunAngleToMinutes, writeSessions } from "../src/modules/sessions/service.js";
 
 const CFG = [
   "[SERVER]",

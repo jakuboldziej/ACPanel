@@ -1,0 +1,7 @@
+@layer components {
+.yaml-editor { width: 100%; resize: vertical; padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--foreground); font: 12.5px/1.5 ui-monospace, "Cascadia Code", Consolas, monospace; tab-size: 2; }
+.yaml-editor[readonly] { opacity: .85; }
+@media (max-width: 720px) {
+  .yaml-editor { font-size: 13px; }
+}
+}

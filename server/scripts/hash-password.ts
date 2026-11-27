@@ -1,6 +1,6 @@
 import readline from "node:readline";
 import { Writable } from "node:stream";
-import { hashPassword } from "../src/lib/password.js";
+import { hashPassword } from "../src/modules/auth/password.js";
 
 let muted = false;
 const output = new Writable({
